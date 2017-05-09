@@ -33,5 +33,3 @@ Route::post('/check', [
 ]);
 
 Auth::routes();
-
-Route::get('/home', 'HomeController@index');
