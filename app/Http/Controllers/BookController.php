@@ -21,17 +21,21 @@ class BookController extends Controller
 		$input = preg_split('/\r\n/', $request->get('urls'));
 
 		foreach ($input as $line) {
-			list($author, $title, $url) = explode(':', $line, 3);
-			$author = trim($author);
-			$title = trim($title);
-			$url = trim($url);
+			try{
+				list($author, $title, $url) = explode(':', $line, 3);
+				$author = trim($author);
+				$title = trim($title);
+				$url = trim($url);
 
-			if(filter_var($url, FILTER_VALIDATE_URL) && empty(Book::where('url', $url)->first())){
-				$book = new Book();
-				$book->url = $url;
-				$book->author = $author;
-				$book->title = $title;
-				$book->save();
+				if(filter_var($url, FILTER_VALIDATE_URL) && empty(Book::where('url', $url)->first())){
+					$book = new Book();
+					$book->url = $url;
+					$book->author = $author;
+					$book->title = $title;
+					$book->save();
+				}
+			}catch(\Exception $e){
+				return redirect()->back()->with('error', 'Looks like a field is missing, author:title:url');
 			}
 		}
 
@@ -50,7 +54,12 @@ class BookController extends Controller
 
 		foreach($books as $book)
 		{
-			$page = file_get_contents($book->url);
+			try{
+				$page = file_get_contents($book->url);
+			}catch(\Exception $e){
+				return redirect()->back()->with('error', "hmm couldn't find this book $book->title");
+			}
+
 			preg_match('/<div class=\"headline headline\-left\">(.*?)<\/div>/s', $page, $matches);
 
 			if(str_contains($matches[0], 'Not yet published')){

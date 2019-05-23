@@ -76,6 +76,12 @@
             </div>
         </nav>
     </div>
+    
+    @if(\Session::has('error'))
+    <div class="row alert-box warning">
+      <h5>{!! \Session::get('error') !!}</h5>
+    </div>
+    @endif
 
 	<div class="row">
 	<h2>Watch list</h2>
