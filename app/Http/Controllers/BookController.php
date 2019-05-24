@@ -50,30 +50,50 @@ class BookController extends Controller
 
 	public function check(Request $request)
 	{
+		$context = stream_context_create(array(
+	        "http" => array(
+	            "header" => "User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36"
+		        )
+		    )
+		);
 		$books = Book::where('available', false)->get();
 
 		foreach($books as $book)
 		{
 			try{
-				$page = file_get_contents($book->url);
+				$page = file_get_contents($book->url, false, $context);
 			}catch(\Exception $e){
 				return redirect()->back()->with('error', "hmm couldn't find this book $book->title");
 			}
 
-			preg_match('/<div class=\"headline headline\-left\">(.*?)<\/div>/s', $page, $matches);
-
-			if(str_contains($matches[0], 'Not yet published')){
-				$book->available = false;
-				$book->save();
-			}elseif(str_contains($matches[0], 'Free shipping')){
-				$book->available = true;
-				$book->save();
-
-                Mail::to('jerome.arfouche@gmail.com')->send(new BookAvailable($book));
+			if(str_contains($book->url, 'mackbooks')){
+				if(str_contains($page, 'Available to pre-order')){
+					$book->available = false;
+					$book->save();
+				}else{
+					$this->notify($book);
+				}
+			}else{
+				preg_match('/<div class=\"headline headline\-left\">(.*?)<\/div>/s', $page, $matches);
+			
+				if(str_contains($matches[0], 'Not yet published')){
+					$book->available = false;
+					$book->save();
+				}elseif(str_contains($matches[0], 'Free shipping')){
+					$this->notify($book);
+				}
 			}
+
 			$page = null;
 		}
 
 		return redirect()->route('index');
+	}
+
+	private function notify($book){
+		$book->available = true;
+		$book->save();
+
+        Mail::to('jerome.arfouche@gmail.com')->send(new BookAvailable($book));
 	}
 }
