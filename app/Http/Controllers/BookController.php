@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Book as Book ;
 use App\Mail\BookAvailable ;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class BookController extends Controller
 {
@@ -66,8 +67,8 @@ class BookController extends Controller
 				return redirect()->back()->with('error', "hmm couldn't find this book $book->title");
 			}
 
-			if(str_contains($book->url, 'mackbooks')){
-				if(str_contains($page, 'Available to pre-order')){
+			if(Str::contains($book->url, 'mackbooks')){
+				if(Str::contains($page, 'Available to pre-order')){
 					$book->available = false;
 					$book->save();
 				}else{
@@ -76,10 +77,10 @@ class BookController extends Controller
 			}else{
 				preg_match('/<div class=\"headline headline\-left\">(.*?)<\/div>/s', $page, $matches);
 			
-				if(str_contains($matches[0], 'Not yet published')){
+				if(Str::contains($matches[0], 'Not yet published')){
 					$book->available = false;
 					$book->save();
-				}elseif(str_contains($matches[0], 'Free shipping')){
+				}elseif(Str::contains($matches[0], 'Free shipping')){
 					$this->notify($book);
 				}
 			}
