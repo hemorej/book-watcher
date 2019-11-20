@@ -4,6 +4,9 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use App\Book;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\BookAvailable;
 
 class Kernel extends ConsoleKernel
 {
@@ -24,8 +27,27 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')
-        //          ->hourly();
+        $schedule->call(function(){
+            $books = Book::where('available', false)->get();
+
+            foreach($books as $book)
+            {
+                $page = file_get_contents($book->url);
+                preg_match('/<div class=\"headline headline\-left\">(.*?)<\/div>/s', $page, $matches);
+
+                if(str_contains($matches[0], 'Not yet published')){
+                    $book->available = false;
+                    $book->save();
+                }elseif(str_contains($matches[0], 'Free shipping')){
+                    $book->available = true;
+                    $book->save();
+
+                    Mail::to('jerome.arfouche@gmail.com')->send(new BookAvailable($book));
+                }
+                $page = null;
+            }
+
+        })->dailyAt('9:00');
     }
 
     /**
