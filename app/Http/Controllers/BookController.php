@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Book as Book ;
+use App\Book;
 use App\Mail\BookAvailable ;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -95,6 +95,6 @@ class BookController extends Controller
 		$book->available = true;
 		$book->save();
 
-        Mail::to('jerome.arfouche@gmail.com')->send(new BookAvailable($book));
+        Mail::to(env('NOTIFICATION_RECIPIENT'))->send(new BookAvailable($book));
 	}
 }

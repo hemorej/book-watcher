@@ -7,6 +7,7 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use App\Book;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\BookAvailable;
+use Illuminate\Support\Str;
 
 class Kernel extends ConsoleKernel
 {
@@ -28,26 +29,52 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->call(function(){
+            $context = stream_context_create(array(
+                "http" => array(
+                    "header" => "User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36"
+                    )
+                )
+            );
             $books = Book::where('available', false)->get();
 
             foreach($books as $book)
             {
-                $page = file_get_contents($book->url);
-                preg_match('/<div class=\"headline headline\-left\">(.*?)<\/div>/s', $page, $matches);
+                try{
+                    $page = file_get_contents($book->url, false, $context);
+                }catch(\Exception $e){
 
-                if(str_contains($matches[0], 'Not yet published')){
-                    $book->available = false;
-                    $book->save();
-                }elseif(str_contains($matches[0], 'Free shipping')){
-                    $book->available = true;
-                    $book->save();
-
-                    Mail::to('jerome.arfouche@gmail.com')->send(new BookAvailable($book));
+                    continue;
                 }
+
+                if(Str::contains($book->url, 'mackbooks')){
+                    if(Str::contains($page, 'Available to pre-order')){
+                        $book->available = false;
+                        $book->save();
+                    }else{
+                        $book->available = true;
+                        $book->save();
+                        
+                        Mail::to(env('NOTIFICATION_RECIPIENT'))->send(new BookAvailable($book));
+                    }
+                }else{
+                    preg_match('/<div class=\"headline headline\-left\">(.*?)<\/div>/s', $page, $matches);
+                
+                    if(Str::contains($matches[0], 'Not yet published')){
+                        $book->available = false;
+                        $book->save();
+                    }elseif(Str::contains($matches[0], 'Free shipping')){
+                        $book->available = true;
+                        $book->save();
+                        
+                        Mail::to(env('NOTIFICATION_RECIPIENT'))->send(new BookAvailable($book));
+                    }
+                }
+
                 $page = null;
             }
 
-        })->dailyAt('9:00');
+
+        })->dailyAt('09:00');
     }
 
     /**
