@@ -15,6 +15,9 @@ class TimestampsDrop extends Migration
     {
         Schema::table('books', function (Blueprint $table) {
             $table->dropColumn('created_at');
+        });
+
+        Schema::table('books', function (Blueprint $table) {
             $table->dropColumn('updated_at');
         });
     }

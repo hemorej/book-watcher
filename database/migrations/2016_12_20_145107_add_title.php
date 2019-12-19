@@ -14,7 +14,7 @@ class AddTitle extends Migration
     public function up()
     {
         Schema::table('urls', function (Blueprint $table) {
-            $table->string('title');
+            $table->string('title')->default('book');
         });
     }
 

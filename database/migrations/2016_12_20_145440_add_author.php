@@ -14,7 +14,7 @@ class AddAuthor extends Migration
     public function up()
     {
         Schema::table('books', function (Blueprint $table) {
-            $table->string('author');
+            $table->string('author')->default('author');
         });
     }
 
