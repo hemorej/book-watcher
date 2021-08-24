@@ -7,8 +7,8 @@ window._ = require('lodash');
  * code may be modified to fit the specific needs of your application.
  */
 
-window.$ = window.jQuery = require('jquery');
-require('bootstrap-sass');
+// window.$ = window.jQuery = require('jquery');
+// require('bootstrap-sass');
 
 /**
  * Vue is a modern JavaScript library for building interactive web interfaces
@@ -17,7 +17,7 @@ require('bootstrap-sass');
  */
 
 window.Vue = require('vue');
-require('vue-resource');
+// require('vue-resource');
 
 /**
  * We'll register a HTTP interceptor to attach the "CSRF" header to each of
