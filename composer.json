@@ -11,7 +11,7 @@
         "php": "^7.3",
         "doctrine/dbal": "^2.10",
         "fideloper/proxy": "^4.0",
-        "laravel/framework": "^7.0",
+        "laravel/framework": "^7.30.6",
         "laravel/tinker": "^2.0",
         "laravel/ui": "^2.5.0"
     },
