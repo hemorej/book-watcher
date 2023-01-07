@@ -66,8 +66,8 @@
     	@unless(empty($books))
     		@foreach ($books as $book)
     		  <div class="row">
-    			  <div class="col-md"><a href="{{ $book->url }}">{{$book->author}}</a></div>
-    			  <div class="col-md"><a href="{{ $book->url }}">{{$book->title}}</a></div>
+    			  <div class="col-md"><a target="_blank" href="{{ $book->url }}">{{$book->author}}</a></div>
+    			  <div class="col-md"><a target="_blank" href="{{ $book->url }}">{{$book->title}}</a></div>
     			  	@if($book->available)
     				  <div class="col-md green">Available :D</div>
     			  	@else
