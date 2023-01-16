@@ -13,7 +13,7 @@ set('repository', 'git@github.com:hemorej/book-watcher.git');
 // [Optional] Allocate tty for git clone. Default value is false.
 set('git_tty', true); 
 
-set('deploy_path', '/home/deploy_user/host/steidl');
+set('deploy_path', '/home/jerome_a_/jerome-arfouche.com/steidl');
 
 // Shared files/dirs between deploys 
 set('writable_mode', 'chmod');
@@ -34,13 +34,13 @@ set('allow_anonymous_stats', false);
 
 // Hosts
 
-host('host')
+host('jerome-arfouche.com')
     ->set('deploy_path', get('deploy_path'))
-	->user('deploy_user')
+    ->user('jerome_a_')
     ->set('branch', 'master');
     
 task('deploy:vendor', function(){
-    run('cd {{release_path}} && php /home/deploy_user/.php/composer/composer install --no-interaction --no-suggest --optimize-autoloader');
+    run('cd {{release_path}} && /usr/local/php74/bin/php /home/jerome_a_/.php/composer/composer install --no-dev --no-interaction --no-suggest --optimize-autoloader');
 });
 
 // Tasks
@@ -51,7 +51,6 @@ task('deploy', [
     'deploy:update_code',
     'deploy:shared',
     'deploy:vendor',
-    'deploy:failed',
     'deploy:unlock'
 ]);
 
