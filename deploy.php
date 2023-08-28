@@ -29,7 +29,7 @@ add('writable_dirs', [
     'bootstrap/cache',
 ]);
 
-set('keep_releases', 10);
+set('keep_releases', 5);
 set('allow_anonymous_stats', false);
 
 // Hosts
@@ -38,12 +38,12 @@ host('jerome-arfouche.com')
     ->set('deploy_path', get('deploy_path'))
     ->user('jerome_a_')
     ->set('branch', 'master');
-    
+
+// Tasks    
 task('deploy:vendor', function(){
     run('cd {{release_path}} && /usr/local/php82/bin/php /home/jerome_a_/.php/composer install --no-dev --no-interaction --no-suggest --optimize-autoloader');
 });
 
-// Tasks
 task('deploy', [
     'deploy:prepare',
     'deploy:lock',
