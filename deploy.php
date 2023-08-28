@@ -40,7 +40,7 @@ host('jerome-arfouche.com')
     ->set('branch', 'master');
     
 task('deploy:vendor', function(){
-    run('cd {{release_path}} && /usr/local/php74/bin/php /home/jerome_a_/.php/composer/composer install --no-dev --no-interaction --no-suggest --optimize-autoloader');
+    run('cd {{release_path}} && /usr/local/php82/bin/php /home/jerome_a_/.php/composer install --no-dev --no-interaction --no-suggest --optimize-autoloader');
 });
 
 // Tasks
