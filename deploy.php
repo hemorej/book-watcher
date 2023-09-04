@@ -44,6 +44,12 @@ task('deploy:vendor', function(){
     run('cd {{release_path}} && /usr/local/php82/bin/php /home/jerome_a_/.php/composer install --no-dev --no-interaction --no-suggest --optimize-autoloader');
 });
 
+task('deploy:relink', function () {
+    run("cd {{deploy_path}} && unlink release");
+    run("cd {{deploy_path}} && unlink current");
+    run("cd {{deploy_path}} && ln -s {{release_path}} current");
+});
+
 task('deploy', [
     'deploy:prepare',
     'deploy:lock',
@@ -51,6 +57,7 @@ task('deploy', [
     'deploy:update_code',
     'deploy:shared',
     'deploy:vendor',
+    'deploy:relink',
     'deploy:unlock'
 ]);
 
