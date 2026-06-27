@@ -2,40 +2,30 @@
 
 namespace App\Mail;
 
+use App\Models\Book;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use App\Book as Book;
 
 class BookAvailable extends Mailable
 {
     use Queueable, SerializesModels;
 
-    protected $book;
+    public function __construct(public readonly Book $book) {}
 
-    /**
-     * Create a new message instance.
-     *
-     * @return void
-     */
-    public function __construct(Book $book)
+    public function envelope(): Envelope
     {
-        $this->book = $book;
+        return new Envelope(
+            subject: "{$this->book->title} is now available",
+        );
     }
 
-    /**
-     * Build the message.
-     *
-     * @return $this
-     */
-    public function build()
+    public function content(): Content
     {
-        return $this->view('emails.available')
-                ->with([ 'title' => $this->book->title,
-                         'author' => $this->book->author,
-                         'url' => $this->book->url,
-                    ]);
-
+        return new Content(
+            view: 'emails.book-available',
+        );
     }
 }

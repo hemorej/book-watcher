@@ -1,25 +1,22 @@
 <?php
 
-Route::get('/', [
-	'as' => 'index',
-	'middleware' => ['web', 'auth'],
-	'uses' => 'BookController@index'
-]);
+use Illuminate\Support\Facades\Route;
+use Livewire\Volt\Volt;
 
-Route::post('/urls/create', [
-	'middleware' => ['web', 'auth'],
-	'uses' => 'BookController@create'
-]);
+Route::get('/', function () {
+    return auth()->check()
+        ? redirect()->route('books')
+        : redirect()->route('login');
+})->name('home');
 
-Route::post('/delete', [
-	'middleware' => ['web', 'auth'],
-	'uses' => 'BookController@delete'
-]);
+Route::middleware(['auth'])->group(function () {
+    Volt::route('books', 'books.index')->name('books');
 
-Route::post('/check', [
-	'middleware' => ['web', 'auth'],
-	'uses' => 'BookController@check'
-]);
+    Route::redirect('settings', 'settings/profile');
 
-Auth::routes(['register' => true]);
-Route::get('/home', 'HomeController@index')->name('home');
+    Volt::route('settings/profile', 'settings.profile')->name('settings.profile');
+    Volt::route('settings/password', 'settings.password')->name('settings.password');
+    Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
+});
+
+require __DIR__.'/auth.php';

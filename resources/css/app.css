@@ -1,0 +1,160 @@
+@import 'tailwindcss';
+@import '../../vendor/livewire/flux/dist/flux.css';
+
+@font-face {
+    font-family: 'Hanken Grotesk';
+    src: url('/fonts/HankenGrotesk-VariableFont_wght.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Hanken Grotesk';
+    src: url('/fonts/HankenGrotesk-Italic-VariableFont_wght.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Newsreader';
+    src: url('/fonts/Newsreader-VariableFont_opsz,wght.ttf') format('truetype');
+    font-weight: 200 800;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Newsreader';
+    src: url('/fonts/Newsreader-Italic-VariableFont_opsz,wght.ttf') format('truetype');
+    font-weight: 200 800;
+    font-style: italic;
+    font-display: swap;
+}
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
+@source '../../vendor/livewire/flux/stubs/**/*.blade.php';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --font-sans: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-serif: 'Newsreader', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+
+    --color-paper: #FBFAF7;
+    --color-card-alt: #FCFBF8;
+    --color-brand-panel: #F2EEE4;
+    --color-ink: #1A1916;
+    --color-ink-hover: #322F2A;
+    --color-ink-cream: #F7F5EF;
+    --color-text-soft: #33302A;
+    --color-muted: #75736B;
+    --color-faint: #A8A49B;
+    --color-line: #ECEAE3;
+    --color-line-strong: #E4E1D8;
+    --color-line-soft: #F3F1EA;
+    --color-toolbar: #F0EEE7;
+    --color-oxblood: #8A3324;
+
+    --color-zinc-50: #fafafa;
+    --color-zinc-100: #f5f5f5;
+    --color-zinc-200: #e5e5e5;
+    --color-zinc-300: #d4d4d4;
+    --color-zinc-400: #a3a3a3;
+    --color-zinc-500: #737373;
+    --color-zinc-600: #525252;
+    --color-zinc-700: #404040;
+    --color-zinc-800: #262626;
+    --color-zinc-900: #171717;
+    --color-zinc-950: #0a0a0a;
+
+    --color-accent: #1A1916;
+    --color-accent-content: #1A1916;
+    --color-accent-foreground: #F7F5EF;
+}
+
+[x-cloak] { display: none !important; }
+
+::selection { background: #E6DFD0; }
+
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-line, currentColor);
+    }
+}
+
+@layer components {
+    .imprint-input {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid #E4E1D8;
+        border-radius: 10px;
+        background: white;
+        font-family: var(--font-sans);
+        font-size: 15px;
+        color: #1A1916;
+    }
+    .imprint-input::placeholder { color: #B6B2A8; }
+    .imprint-input:focus {
+        outline: none;
+        border-color: #1A1916;
+        box-shadow: 0 0 0 3px rgba(26,25,22,0.06);
+    }
+
+    .imprint-input-sm {
+        width: 100%;
+        padding: 11px 13px;
+        border: 1px solid #E4E1D8;
+        border-radius: 9px;
+        background: white;
+        font-family: var(--font-sans);
+        font-size: 14.5px;
+        color: #1A1916;
+    }
+    .imprint-input-sm::placeholder { color: #B6B2A8; }
+    .imprint-input-sm:focus {
+        outline: none;
+        border-color: #1A1916;
+        box-shadow: 0 0 0 3px rgba(26,25,22,0.06);
+    }
+
+    /* Status badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 11px;
+        border-radius: 999px;
+        font-family: var(--font-sans);
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .status-badge-lg { padding: 5px 12px; font-size: 12.5px; }
+    .status-badge-sm { padding: 4px 10px; font-size: 11.5px; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+    .badge-available  { background: #E7F0E9; color: #2C6B4F; }
+    .dot-available    { background: #3C8A63; }
+    .spine-available  { background: #3C8A63; }
+
+    .badge-unavailable { background: #F6E7E1; color: #A23E28; }
+    .dot-unavailable   { background: #C25A3C; }
+    .spine-unavailable { background: #C25A3C; }
+
+    .badge-unsure  { background: #F0EEE7; color: #736E64; }
+    .dot-unsure    { background: #B6B0A4; }
+    .spine-unsure  { background: #CFC9BC; }
+
+    /* Status icon chips (dropdown menu) */
+    .chip-available   { background: #3C8A63; color: #fff; }
+    .chip-unavailable { background: #C25A3C; color: #fff; }
+    .chip-unsure      { background: #B6B0A4; color: #fff; }
+}
