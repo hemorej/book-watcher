@@ -48,7 +48,7 @@ sail up -d        # start containers (PHP 8.5 + MariaDB 11 + queue worker)
 sail down         # stop containers
 ```
 
-For local development outside Docker (requires PHP 8.5, Node):
+For local development outside Docker (requires PHP 8.5, Node, and pnpm):
 
 ```bash
 composer run dev  # starts server + queue worker + pail log viewer + Vite

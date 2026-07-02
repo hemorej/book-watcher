@@ -17,6 +17,7 @@ enum BookStatus: string
         };
     }
 
+    /** Returns a Flux UI color name used by the status badge component. */
     public function color(): string
     {
         return match($this) {

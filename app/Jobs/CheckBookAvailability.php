@@ -35,6 +35,7 @@ class CheckBookAvailability implements ShouldQueue
         $becameAvailable = $previousStatus !== BookStatus::Available
             && $newStatus === BookStatus::Available;
 
+        // notification_recipient is set via the NOTIFICATION_RECIPIENT env variable
         if ($becameAvailable && $recipient = config('app.notification_recipient')) {
             Mail::to($recipient)->send(new BookAvailable($this->book));
         }

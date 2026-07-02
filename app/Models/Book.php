@@ -5,6 +5,9 @@ namespace App\Models;
 use App\Enums\BookStatus;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property bool $override When true, status was set manually and the checker will skip this book.
+ */
 class Book extends Model
 {
     protected $fillable = ['url', 'title', 'author', 'status', 'last_checked_at', 'override'];

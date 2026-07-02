@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # Enable version updates for npm
+  # Enable version updates for pnpm (uses "npm" ecosystem)
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
