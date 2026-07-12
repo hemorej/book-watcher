@@ -1,0 +1,39 @@
+name: Dependency publisher check
+
+# Runs on any PR that touches composer.lock/composer.json and flags
+# newly-introduced package releases that are either very recently tagged
+# or whose source repository no longer matches what Packagist has on
+# file — signals of a compromised/hijacked package release (this check
+# mirrors the one added to our JS projects after Dependabot proposed a
+# fake typescript@7.0.2 release there).
+#
+# Note: unlike the pnpm `minimumReleaseAge` setting used on our JS repos,
+# Composer has no resolver-level equivalent — this only gates CI/PRs, it
+# does not stop a local `composer update` from pulling a fresh release.
+on:
+  pull_request:
+    paths:
+      - "composer.lock"
+      - "composer.json"
+
+jobs:
+  check-new-releases:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+
+      - name: Composer audit (known vulnerabilities)
+        run: composer audit --no-interaction
+
+      - name: Check release age and source integrity
+        env:
+          BASE_REF: origin/${{ github.event.pull_request.base.ref }}
+        run: php scripts/check-new-releases.php
