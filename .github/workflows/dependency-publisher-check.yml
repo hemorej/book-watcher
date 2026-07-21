@@ -31,7 +31,7 @@ jobs:
           php-version: "8.5"
 
       - name: Composer audit (known vulnerabilities)
-        run: composer audit --no-interaction
+        run: composer audit --no-interaction --locked
 
       - name: Check release age and source integrity
         env:
