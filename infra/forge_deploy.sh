@@ -14,7 +14,7 @@ $FORGE_PHP artisan config:cache
 $FORGE_PHP artisan route:cache
 $FORGE_PHP artisan view:cache
 
-ln -s /mnt/volume-tor1-01/imprintfonts public/fonts
+ln -s /mnt/$VOLUME_NAME/imprintfonts public/fonts
 
 $ACTIVATE_RELEASE()
 
