@@ -3,6 +3,7 @@
 use App\Enums\BookStatus;
 use App\Jobs\CheckBookAvailability;
 use App\Models\Book;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
@@ -79,7 +80,9 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
 
     public function checkAll(): void
     {
-        Book::all()->each(fn (Book $book) => CheckBookAvailability::dispatch($book));
+        $books = Book::all();
+        Log::info('book_availability.sweep_dispatched', ['count' => $books->count()]);
+        $books->each(fn (Book $book) => CheckBookAvailability::dispatch($book));
     }
 
     public function setStatus(int $id, string $status): void
@@ -89,6 +92,8 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
         $book->override = true;
         $book->last_checked_at = now();
         $book->save();
+
+        Log::info('book_availability.manual_override_set', ['book_id' => $book->id, 'status' => $status]);
     }
 
     public function clearOverride(int $id): void
@@ -96,6 +101,8 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
         $book = Book::findOrFail($id);
         $book->override = false;
         $book->save();
+
+        Log::info('book_availability.manual_override_cleared', ['book_id' => $book->id]);
     }
 }; ?>
 

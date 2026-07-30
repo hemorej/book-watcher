@@ -20,13 +20,13 @@ class BookCheckerService
             )->timeout(15)->get($url);
 
             if (! $response->successful()) {
-                Log::warning("BookChecker: non-200 response for $url", ['status' => $response->status()]);
+                Log::warning('book_checker.non_200_response', ['url' => $url, 'status' => $response->status()]);
                 return BookStatus::Unsure;
             }
 
             $content = $response->body();
         } catch (\Throwable $e) {
-            Log::warning("BookChecker: failed to fetch $url — {$e->getMessage()}");
+            Log::warning('book_checker.fetch_failed', ['url' => $url, 'error' => $e->getMessage()]);
             return BookStatus::Unsure;
         }
 
