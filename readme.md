@@ -1,5 +1,7 @@
 # Bookwatcher
 
+[![Laravel Forge Site Deployment Status](https://img.shields.io/endpoint?url=https%3A%2F%2Fforge.laravel.com%2Fsite-badges%2F86693d15-4116-4d18-b309-f54bed3c3aa1&style=plastic)](https://forge.laravel.com/jerome-zpm/resilient-bird/3265168)
+
 Monitors book listings at Steidl, Mack, and other publishers and sends an email when a title becomes available.
 
 Built with Laravel 12, Livewire/Volt, Flux UI, and MariaDB. Runs in Docker via Laravel Sail.
