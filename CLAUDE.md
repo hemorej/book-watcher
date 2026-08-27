@@ -13,7 +13,7 @@ sail down                         # stop containers
 composer run dev                  # start everything locally: server + queue worker + pail + vite
 ```
 
-The `composer run dev` script uses `concurrently` to spin up four processes at once: `php artisan serve`, `php artisan queue:listen --tries=1`, `php artisan pail`, and `npm run dev`. The queue worker is required — availability checks are dispatched as jobs and will not run otherwise.
+The `composer run dev` script uses `concurrently` to spin up four processes at once: `php artisan serve`, `php artisan queue:listen --tries=1`, `php artisan pail`, and `pnpm run dev`. The queue worker is required — availability checks are dispatched as jobs and will not run otherwise.
 
 ## Testing
 
@@ -61,7 +61,7 @@ All UI is Volt single-file components under `resources/views/livewire/`. PHP log
 
 `#[\Livewire\Attributes\Computed]` methods are re-evaluated on every render (including polls). The root `<div wire:poll.5s>` drives the live status refresh.
 
-The add-book form lives inside a `flux:modal name="add-book"` — opened via `flux:modal.trigger`, closed programmatically with `$this->modal('add-book')->close()`.
+The add-book form is a custom Alpine.js modal (`x-show="showAdd"`). It is opened by setting `showAdd = true` and closed either by setting `showAdd = false` or via the `close-add-modal` Livewire event dispatched from `saveBooks()`. The book list supports three layouts (ledger, shelf, index) persisted in `localStorage` under the key `imprint-layout`.
 
 ### Queue
 

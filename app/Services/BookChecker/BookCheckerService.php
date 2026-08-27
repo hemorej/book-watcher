@@ -6,12 +6,23 @@ use App\Enums\BookStatus;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Fetches a book's publisher page once and delegates parsing to the first
+ * registered {@see CheckerInterface} that supports the URL.
+ *
+ * The checker list is wired up as a singleton in
+ * {@see \App\Providers\AppServiceProvider::register()}; {@see DefaultChecker}
+ * is always last so an unrecognised URL yields Unsure rather than an error.
+ */
 class BookCheckerService
 {
     /** @param CheckerInterface[] $checkers Ordered list; first match wins. DefaultChecker must be last. */
     public function __construct(private readonly array $checkers) {}
 
-    /** Fetch $url and return its availability. Returns Unsure on HTTP errors or timeout. */
+    /**
+     * Fetch $url (spoofed desktop UA, 15s timeout) and return its availability.
+     * Returns Unsure on any HTTP error, timeout, or when no checker matches.
+     */
     public function check(string $url): BookStatus
     {
         try {

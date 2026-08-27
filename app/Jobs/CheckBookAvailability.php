@@ -11,14 +11,28 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * Re-checks one book's availability and, on an Unavailable→Available
+ * transition, emails the configured recipient.
+ *
+ * Dispatched one-per-book by the "sweep" action on the books list
+ * (resources/views/livewire/books/index.blade.php). Queued; retried up to
+ * 3 times. Books with `override` set are skipped entirely.
+ */
 class CheckBookAvailability implements ShouldQueue
 {
     use Queueable;
 
+    /** Max queue attempts before the job is marked failed. */
     public int $tries = 3;
 
     public function __construct(public readonly Book $book) {}
 
+    /**
+     * Fetch and parse the book's page, persist the new status/timestamp, log
+     * any change, and send the "now available" email on a first transition
+     * into Available (when app.notification_recipient is configured).
+     */
     public function handle(BookCheckerService $checker): void
     {
         // Books with override set were manually assigned a status — skip the check
@@ -54,6 +68,7 @@ class CheckBookAvailability implements ShouldQueue
         }
     }
 
+    /** Called by the queue after the final retry fails; logs and swallows. */
     public function failed(\Throwable $e): void
     {
         Log::error('book_availability.check_failed', [

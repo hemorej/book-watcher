@@ -10,9 +10,13 @@ use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
+    /**
+     * Bind BookCheckerService with its ordered checker list. Order is
+     * significant: the first checker whose supports() matches wins, and
+     * DefaultChecker (matches everything) must remain last.
+     */
     public function register(): void
     {
-        // Checkers are tried in order; DefaultChecker must remain last
         $this->app->singleton(BookCheckerService::class, fn () => new BookCheckerService([
             new SteidlChecker(),
             new MackChecker(),

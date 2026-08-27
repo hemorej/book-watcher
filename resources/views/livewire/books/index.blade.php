@@ -7,21 +7,33 @@ use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
+/**
+ * Watch List page (Volt single-file component).
+ *
+ * Shows every watched book, lets the user add books in bulk via a repeating
+ * row form, manually override a status, and trigger a "sweep" that queues a
+ * {@see CheckBookAvailability} job per book. The view polls every 5s
+ * (`wire:poll.5s`) so statuses refresh as the queued jobs land.
+ */
 new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class extends Component {
+    /** Draft rows for the "add books" form; one blank row by default. */
     public array $rows = [['author' => '', 'title' => '', 'url' => '']];
 
+    /** All books, Unavailable/Unsure before Available (enum value order), then by author. */
     #[\Livewire\Attributes\Computed]
     public function books(): \Illuminate\Database\Eloquent\Collection
     {
         return Book::orderBy('status')->orderBy('author')->get();
     }
 
+    /** How many watched books are currently Available. */
     #[\Livewire\Attributes\Computed]
     public function availableCount(): int
     {
         return $this->books->filter(fn ($b) => $b->status === BookStatus::Available)->count();
     }
 
+    /** "2 hours ago" / "never" — most recent last_checked_at across all books. */
     #[\Livewire\Attributes\Computed]
     public function lastSwept(): string
     {
@@ -29,22 +41,30 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
         return $latest ? $latest->diffForHumans() : 'never';
     }
 
+    /** Collapse the add form back to a single blank row. */
     public function resetRows(): void
     {
         $this->rows = [['author' => '', 'title' => '', 'url' => '']];
     }
 
+    /** Append one blank row to the add form. */
     public function addRow(): void
     {
         $this->rows[] = ['author' => '', 'title' => '', 'url' => ''];
     }
 
+    /** Remove row $index and reindex so wire:model bindings stay contiguous. */
     public function removeRow(int $index): void
     {
         array_splice($this->rows, $index, 1);
         $this->rows = array_values($this->rows);
     }
 
+    /**
+     * Persist the draft rows. Rows with no author and no title are skipped;
+     * an invalid URL aborts the whole save with an error; a URL that already
+     * exists is silently skipped. New books start as Unsure.
+     */
     public function saveBooks(): void
     {
         foreach ($this->rows as $row) {
@@ -73,11 +93,13 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
         $this->dispatch('close-add-modal');
     }
 
+    /** Delete a book from the watch list. */
     public function deleteBook(int $id): void
     {
         Book::destroy($id);
     }
 
+    /** Queue an availability check for every book (the "sweep"). */
     public function checkAll(): void
     {
         $books = Book::all();
@@ -85,6 +107,10 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
         $books->each(fn (Book $book) => CheckBookAvailability::dispatch($book));
     }
 
+    /**
+     * Manually pin a book's status. Sets `override` so the automated checker
+     * leaves it alone until {@see clearOverride()} is called.
+     */
     public function setStatus(int $id, string $status): void
     {
         $book = Book::findOrFail($id);
@@ -96,6 +122,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
         Log::info('book_availability.manual_override_set', ['book_id' => $book->id, 'status' => $status]);
     }
 
+    /** Re-enable automated checking for a book (drops the manual pin). */
     public function clearOverride(int $id): void
     {
         $book = Book::findOrFail($id);
