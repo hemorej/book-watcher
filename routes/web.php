@@ -11,6 +11,7 @@ Route::get('/', function () {
 
 Route::middleware(['auth'])->group(function () {
     Volt::route('books', 'books.index')->name('books');
+    Volt::route('library', 'library.index')->name('library');
 
     Route::redirect('settings', 'settings/profile');
 

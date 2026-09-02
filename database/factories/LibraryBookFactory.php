@@ -21,6 +21,9 @@ class LibraryBookFactory extends Factory
             'author' => fake()->name(),
             'publisher' => fake()->company(),
             'year' => fake()->numberBetween(1950, 2026),
+            'edition' => null,
+            'condition' => null,
+            'acquired_at' => fake()->optional()->dateTimeBetween('-2 years'),
         ];
     }
 }
