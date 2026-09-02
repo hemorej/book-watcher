@@ -183,9 +183,11 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
         @else
 
         {{-- ===== LEDGER ===== --}}
-        <div class="border border-line rounded-[14px] overflow-hidden bg-white">
+        {{-- No `overflow-hidden` here: it would clip an open status popover. The
+             header and last row round their own outer corners instead. --}}
+        <div class="border border-line rounded-[14px] bg-white">
             {{-- Header row --}}
-            <div class="grid gap-0 px-[22px] py-[14px] bg-[#FAF9F5] border-b border-line text-[11.5px] tracking-[0.06em] uppercase text-[#A29E94] font-semibold"
+            <div class="grid gap-0 px-[22px] py-[14px] bg-[#FAF9F5] border-b border-line rounded-t-[14px] text-[11.5px] tracking-[0.06em] uppercase text-[#A29E94] font-semibold"
                  style="grid-template-columns:1.1fr 1.4fr 150px 150px 84px;">
                 <span>Author</span>
                 <span>Title</span>
@@ -196,7 +198,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
 
             @foreach($this->books as $book)
                 @php $s = $book->status->value === 'available' ? 'available' : ($book->status->value === 'unavailable' ? 'unavailable' : 'unsure'); @endphp
-                <div class="grid gap-0 items-center px-[22px] py-[16px] border-b border-line-soft last:border-b-0 hover:bg-[#FBFAF6] transition-colors"
+                <div class="grid gap-0 items-center px-[22px] py-[16px] border-b border-line-soft last:border-b-0 last:rounded-b-[14px] hover:bg-[#FBFAF6] transition-colors"
                      style="grid-template-columns:1.1fr 1.4fr 150px 150px 84px;">
                     <span class="text-[14.5px] text-[#56524A]">{{ $book->author ?: '—' }}</span>
                     <a href="{{ $book->url }}" target="_blank" rel="noopener"

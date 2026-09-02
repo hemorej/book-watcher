@@ -76,3 +76,44 @@ test('a volume with neither author nor title is ignored', function () {
 
     expect(LibraryBook::count())->toBe(0);
 });
+
+test('a row can be edited inline', function () {
+    $this->actingAs(User::factory()->create());
+
+    $volume = LibraryBook::factory()->create([
+        'author' => 'Robert Adams',
+        'title' => 'Summer Nights',
+        'publisher' => 'Aperture',
+        'year' => 2009,
+    ]);
+
+    Volt::test('library.index')
+        ->call('startEdit', $volume->id)
+        ->assertSet('editRow.author', 'Robert Adams')
+        ->set('editRow.title', 'Summer Nights, Walking')
+        ->set('editRow.publisher', 'Aperture Foundation')
+        ->set('editRow.year', '2010')
+        ->call('saveEdit')
+        ->assertSet('editingId', null);
+
+    expect($volume->fresh())
+        ->title->toBe('Summer Nights, Walking')
+        ->publisher->toBe('Aperture Foundation')
+        ->year->toBe(2010);
+});
+
+test('an inline edit that clears author and title is rejected', function () {
+    $this->actingAs(User::factory()->create());
+
+    $volume = LibraryBook::factory()->create(['author' => 'Robert Adams', 'title' => 'Summer Nights']);
+
+    Volt::test('library.index')
+        ->call('startEdit', $volume->id)
+        ->set('editRow.author', '')
+        ->set('editRow.title', '')
+        ->call('saveEdit')
+        ->assertHasErrors('editRow')
+        ->assertSet('editingId', $volume->id);
+
+    expect($volume->fresh()->title)->toBe('Summer Nights');
+});

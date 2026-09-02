@@ -111,6 +111,79 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
         $this->resetVol();
         $this->dispatch('close-add-volume-modal');
     }
+
+    /** Id of the row currently open for inline editing, or null. */
+    public ?int $editingId = null;
+
+    /** Working copy of the row being edited. */
+    public array $editRow = ['author' => '', 'title' => '', 'publisher' => '', 'year' => ''];
+
+    /** Open a row for inline editing, seeded with its current values. */
+    public function startEdit(int $id): void
+    {
+        $volume = LibraryBook::find($id);
+
+        if (! $volume) {
+            return;
+        }
+
+        $this->resetErrorBag('editRow');
+        $this->editingId = $id;
+        $this->editRow = [
+            'author' => (string) $volume->author,
+            'title' => (string) $volume->title,
+            'publisher' => (string) $volume->publisher,
+            'year' => (string) ($volume->year ?? ''),
+        ];
+    }
+
+    /** Discard the inline edit without saving. */
+    public function cancelEdit(): void
+    {
+        $this->editingId = null;
+        $this->editRow = ['author' => '', 'title' => '', 'publisher' => '', 'year' => ''];
+        $this->resetErrorBag('editRow');
+    }
+
+    /**
+     * Persist the inline edit. Same field rules as {@see saveVolume()}: an
+     * author or a title is required; blank publisher/year fall back to their
+     * placeholders.
+     */
+    public function saveEdit(): void
+    {
+        if ($this->editingId === null) {
+            return;
+        }
+
+        $volume = LibraryBook::find($this->editingId);
+
+        if (! $volume) {
+            $this->cancelEdit();
+
+            return;
+        }
+
+        $author = trim($this->editRow['author'] ?? '');
+        $title = trim($this->editRow['title'] ?? '');
+
+        if (! $author && ! $title) {
+            $this->addError('editRow', 'Give the volume an author or a title.');
+
+            return;
+        }
+
+        $year = trim((string) ($this->editRow['year'] ?? ''));
+
+        $volume->update([
+            'author' => $author,
+            'title' => $title ?: 'Untitled',
+            'publisher' => trim($this->editRow['publisher'] ?? '') ?: 'Unknown publisher',
+            'year' => ctype_digit($year) ? (int) $year : null,
+        ]);
+
+        $this->cancelEdit();
+    }
 }; ?>
 
 <div x-data="{ showAddVolume: false }"
@@ -181,24 +254,64 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
             </div>
         @else
 
+        @error('editRow')
+            <p class="text-[13px] text-[#A23E28] mb-2">{{ $message }}</p>
+        @enderror
+
         {{-- ===== LEDGER ===== --}}
         <div class="border border-line rounded-[14px] overflow-hidden bg-white">
             {{-- Header row --}}
             <div class="grid gap-4 px-[22px] py-[14px] bg-[#FAF9F5] border-b border-line text-[11.5px] tracking-[0.06em] uppercase text-[#A29E94] font-semibold"
-                 style="grid-template-columns:1fr 1.6fr 1.1fr 80px;">
+                 style="grid-template-columns:1fr 1.6fr 1.1fr 80px 48px;">
                 <span>Author</span>
                 <span>Title</span>
                 <span>Publisher</span>
                 <span class="text-right">Year</span>
+                <span></span>
             </div>
 
             @foreach($this->books as $volume)
-                <div class="grid gap-4 items-center px-[22px] py-[16px] border-b border-line-soft last:border-b-0 hover:bg-[#FBFAF6] transition-colors"
-                     style="grid-template-columns:1fr 1.6fr 1.1fr 80px;">
-                    <span class="text-[14.5px] text-[#56524A]">{{ $volume->author ?: '—' }}</span>
-                    <span class="font-serif text-[18px] leading-[1.25] text-ink">{{ $volume->title ?: 'Untitled' }}</span>
-                    <span class="text-[14px] text-muted">{{ $volume->publisher ?: 'Unknown publisher' }}</span>
-                    <span class="text-[14px] text-muted text-right" style="font-variant-numeric:tabular-nums;">{{ $volume->year ?: '—' }}</span>
+                <div wire:key="volume-{{ $volume->id }}"
+                     class="grid gap-4 items-center px-[22px] py-[16px] border-b border-line-soft last:border-b-0 hover:bg-[#FBFAF6] transition-colors"
+                     style="grid-template-columns:1fr 1.6fr 1.1fr 80px 48px;">
+                    @if($editingId === $volume->id)
+                        {{-- Inline edit --}}
+                        <input wire:model="editRow.author" type="text" aria-label="Author"
+                               class="imprint-input-sm" style="padding:8px 10px;font-size:13.5px;" />
+                        <input wire:model="editRow.title" type="text" aria-label="Title"
+                               class="imprint-input-sm" style="padding:8px 10px;font-size:13.5px;" />
+                        <input wire:model="editRow.publisher" type="text" aria-label="Publisher"
+                               class="imprint-input-sm" style="padding:8px 10px;font-size:13.5px;" />
+                        <input wire:model="editRow.year" type="text" inputmode="numeric" aria-label="Year"
+                               class="imprint-input-sm" style="padding:8px 10px;font-size:13.5px;text-align:right;" />
+                        <div class="flex justify-end gap-[2px]">
+                            <button wire:click="saveEdit" type="button" title="Save"
+                                    class="w-8 h-8 inline-flex items-center justify-center bg-transparent border-none rounded-[8px] cursor-pointer text-[#8A867C] hover:bg-[#E7F0E9] hover:text-[#2C6B4F] transition-colors">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="m5 12 5 5 9-11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                            <button wire:click="cancelEdit" type="button" title="Cancel"
+                                    class="w-8 h-8 inline-flex items-center justify-center bg-transparent border-none rounded-[8px] cursor-pointer text-[#8A867C] hover:bg-toolbar hover:text-ink transition-colors">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    @else
+                        <span class="text-[14.5px] text-[#56524A]">{{ $volume->author ?: '—' }}</span>
+                        <span class="font-serif text-[18px] leading-[1.25] text-ink">{{ $volume->title ?: 'Untitled' }}</span>
+                        <span class="text-[14px] text-muted">{{ $volume->publisher ?: 'Unknown publisher' }}</span>
+                        <span class="text-[14px] text-muted text-right" style="font-variant-numeric:tabular-nums;">{{ $volume->year ?: '—' }}</span>
+                        <div class="flex justify-end">
+                            <button wire:click="startEdit({{ $volume->id }})" type="button" title="Edit"
+                                    class="w-8 h-8 inline-flex items-center justify-center bg-transparent border-none rounded-[8px] cursor-pointer text-[#8A867C] hover:bg-toolbar hover:text-ink transition-colors">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M4 20h4L18.5 9.5a2 2 0 0 0-3-3L5 17v3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    @endif
                 </div>
             @endforeach
         </div>

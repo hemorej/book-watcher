@@ -1,5 +1,7 @@
 {{-- Status menu partial: expects $book (Book model) and $offset (e.g. 'top-[38px]') --}}
-<div x-data="{ open: false }" class="relative flex gap-[2px]">
+{{-- `z-50` while open lifts this row's actions above the rows painted after it,
+     so the popover is never covered by a later row. --}}
+<div x-data="{ open: false }" class="relative flex gap-[2px]" :class="{ 'z-50': open }">
     <button @click.stop="open = !open"
             type="button"
             title="Set status"
