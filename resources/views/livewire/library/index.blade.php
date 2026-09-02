@@ -320,9 +320,12 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
                                     <path d="M4 20h4L18.5 9.5a2 2 0 0 0-3-3L5 17v3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
                                 </svg>
                             </button>
-                            <button wire:click="deleteVolume({{ $volume->id }})"
-                                    wire:confirm="Remove '{{ addslashes($volume->title ?: 'this volume') }}' from the library?"
-                                    type="button" title="Remove"
+                            <button type="button" title="Remove"
+                                    @click="$dispatch('confirm-action', {
+                                        message: @js('Remove \''.($volume->title ?: 'this volume').'\' from the library?'),
+                                        confirmLabel: 'Remove',
+                                        onConfirm: () => $wire.deleteVolume({{ $volume->id }}),
+                                    })"
                                     class="w-8 h-8 inline-flex items-center justify-center bg-transparent border-none rounded-[8px] cursor-pointer text-[#8A867C] hover:bg-[#F6E7E1] hover:text-[#A23E28] transition-colors">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                     <path d="M5 7h14M10 7V5h4v2M6 7l1 13h10l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -392,5 +395,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
             </div>
         </div>
     </div>
+
+    <x-confirm-modal />
 
 </div>

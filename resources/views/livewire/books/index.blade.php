@@ -322,4 +322,6 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
         </div>
     </div>
 
+    <x-confirm-modal />
+
 </div>
