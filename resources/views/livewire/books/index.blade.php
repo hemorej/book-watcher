@@ -134,11 +134,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
 }; ?>
 
 <div wire:poll.5s
-     x-data="{
-         layout: localStorage.getItem('imprint-layout') || 'shelf',
-         setLayout(v) { this.layout = v; localStorage.setItem('imprint-layout', v); },
-         showAdd: false,
-     }"
+     x-data="{ showAdd: false }"
      @close-add-modal.window="showAdd = false">
 
     <main class="mx-auto px-7 pt-10 pb-20" style="max-width:1060px;">
@@ -177,28 +173,6 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
             </div>
         </div>
 
-        {{-- View switcher --}}
-        <div class="flex items-center justify-end gap-3 mb-[18px]">
-            <span class="text-[12px] tracking-[0.06em] uppercase text-faint font-semibold">View</span>
-            <div class="inline-flex bg-toolbar border border-[#E7E4DB] rounded-[10px] p-[3px] gap-[2px]">
-                <button @click="setLayout('ledger')"
-                        :class="layout === 'ledger' ? 'bg-white text-ink shadow-[0_1px_2px_rgba(20,18,12,0.10)]' : 'bg-transparent text-[#86837A]'"
-                        class="inline-flex items-center px-[13px] py-[6px] rounded-[7px] font-semibold text-[13px] border-none cursor-pointer transition-all">
-                    Ledger
-                </button>
-                <button @click="setLayout('shelf')"
-                        :class="layout === 'shelf' ? 'bg-white text-ink shadow-[0_1px_2px_rgba(20,18,12,0.10)]' : 'bg-transparent text-[#86837A]'"
-                        class="inline-flex items-center px-[13px] py-[6px] rounded-[7px] font-semibold text-[13px] border-none cursor-pointer transition-all">
-                    Shelf
-                </button>
-                <button @click="setLayout('index')"
-                        :class="layout === 'index' ? 'bg-white text-ink shadow-[0_1px_2px_rgba(20,18,12,0.10)]' : 'bg-transparent text-[#86837A]'"
-                        class="inline-flex items-center px-[13px] py-[6px] rounded-[7px] font-semibold text-[13px] border-none cursor-pointer transition-all">
-                    Index
-                </button>
-            </div>
-        </div>
-
         {{-- Empty state --}}
         @if($this->books->isEmpty())
             <div class="text-center py-20 border border-dashed border-[#DEDACE] rounded-[16px] bg-white">
@@ -209,100 +183,39 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
         @else
 
         {{-- ===== LEDGER ===== --}}
-        <div x-show="layout === 'ledger'" x-cloak>
-            <div class="border border-line rounded-[14px] overflow-hidden bg-white">
-                {{-- Header row --}}
-                <div class="grid gap-0 px-[22px] py-[14px] bg-[#FAF9F5] border-b border-line text-[11.5px] tracking-[0.06em] uppercase text-[#A29E94] font-semibold"
-                     style="grid-template-columns:1.1fr 1.4fr 150px 150px 84px;">
-                    <span>Author</span>
-                    <span>Title</span>
-                    <span>Status</span>
-                    <span>Last checked</span>
-                    <span></span>
-                </div>
-
-                @foreach($this->books as $book)
-                    @php $s = $book->status->value === 'available' ? 'available' : ($book->status->value === 'unavailable' ? 'unavailable' : 'unsure'); @endphp
-                    <div class="grid gap-0 items-center px-[22px] py-[16px] border-b border-line-soft last:border-b-0 hover:bg-[#FBFAF6] transition-colors"
-                         style="grid-template-columns:1.1fr 1.4fr 150px 150px 84px;">
-                        <span class="text-[14.5px] text-[#56524A]">{{ $book->author ?: '—' }}</span>
-                        <a href="{{ $book->url }}" target="_blank" rel="noopener"
-                           class="font-serif text-[18px] text-ink no-underline hover:underline underline-offset-[3px]">
-                            {{ $book->title ?: 'Untitled' }}
-                        </a>
-                        <span>
-                            <span class="status-badge badge-{{ $s }}">
-                                <span class="status-dot dot-{{ $s }}"></span>
-                                {{ $book->status->label() }}
-                            </span>
-                        </span>
-                        <span class="text-[13px] text-[#9B978D]">
-                            {{ $book->last_checked_at?->diffForHumans() ?? 'Never' }}
-                        </span>
-                        <div class="flex justify-end">
-                            @include('livewire.books._status-menu', ['book' => $book, 'offset' => 'top-[38px]'])
-                        </div>
-                    </div>
-                @endforeach
+        {{-- No `overflow-hidden` here: it would clip an open status popover. The
+             header and last row round their own outer corners instead. --}}
+        <div class="border border-line rounded-[14px] bg-white">
+            {{-- Header row --}}
+            <div class="grid gap-0 px-[22px] py-[14px] bg-[#FAF9F5] border-b border-line rounded-t-[14px] text-[11.5px] tracking-[0.06em] uppercase text-[#A29E94] font-semibold"
+                 style="grid-template-columns:1.1fr 1.4fr 150px 150px 84px;">
+                <span>Author</span>
+                <span>Title</span>
+                <span>Status</span>
+                <span>Last checked</span>
+                <span></span>
             </div>
-        </div>
 
-        {{-- ===== SHELF ===== --}}
-        <div x-show="layout === 'shelf'" x-cloak class="flex flex-col gap-3">
             @foreach($this->books as $book)
                 @php $s = $book->status->value === 'available' ? 'available' : ($book->status->value === 'unavailable' ? 'unavailable' : 'unsure'); @endphp
-                <div class="flex items-stretch bg-white border border-line rounded-[14px] overflow-hidden hover:border-[#DED9CC] transition-colors">
-                    <span class="w-[5px] shrink-0 spine-{{ $s }}"></span>
-                    <div class="flex-1 flex items-center justify-between gap-5 px-[22px] py-[18px]">
-                        <div class="min-w-0">
-                            <div class="text-[11px] tracking-[0.08em] uppercase text-faint font-semibold mb-[5px]">
-                                {{ $book->author ?: '—' }}
-                            </div>
-                            <a href="{{ $book->url }}" target="_blank" rel="noopener"
-                               class="font-serif text-[22px] leading-[1.2] text-ink no-underline hover:underline underline-offset-[3px]">
-                                {{ $book->title ?: 'Untitled' }}
-                            </a>
-                        </div>
-                        <div class="flex items-center gap-[18px] shrink-0">
-                            <span class="status-badge status-badge-lg badge-{{ $s }}">
-                                <span class="status-dot dot-{{ $s }}"></span>
-                                {{ $book->status->label() }}
-                            </span>
-                            <span class="text-[12.5px] text-faint w-[84px] text-right">
-                                {{ $book->last_checked_at?->diffForHumans() ?? 'Never' }}
-                            </span>
-                            @include('livewire.books._status-menu', ['book' => $book, 'offset' => 'top-[38px]'])
-                        </div>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-
-        {{-- ===== INDEX ===== --}}
-        <div x-show="layout === 'index'" x-cloak
-             class="grid gap-[14px]"
-             style="grid-template-columns:repeat(3,1fr);">
-            @foreach($this->books as $book)
-                @php $s = $book->status->value === 'available' ? 'available' : ($book->status->value === 'unavailable' ? 'unavailable' : 'unsure'); @endphp
-                <div class="relative flex flex-col bg-white border border-line rounded-[14px] p-[18px] min-h-[172px] hover:border-[#DED9CC] hover:shadow-[0_6px_20px_rgba(20,18,12,0.05)] transition-all">
-                    <div class="flex items-center justify-between mb-[14px]">
-                        <span class="status-badge status-badge-sm badge-{{ $s }}">
+                <div class="grid gap-0 items-center px-[22px] py-[16px] border-b border-line-soft last:border-b-0 last:rounded-b-[14px] hover:bg-[#FBFAF6] transition-colors"
+                     style="grid-template-columns:1.1fr 1.4fr 150px 150px 84px;">
+                    <span class="text-[14.5px] text-[#56524A]">{{ $book->author ?: '—' }}</span>
+                    <a href="{{ $book->url }}" target="_blank" rel="noopener"
+                       class="font-serif text-[18px] text-ink no-underline hover:underline underline-offset-[3px]">
+                        {{ $book->title ?: 'Untitled' }}
+                    </a>
+                    <span>
+                        <span class="status-badge badge-{{ $s }}">
                             <span class="status-dot dot-{{ $s }}"></span>
                             {{ $book->status->label() }}
                         </span>
-                        @include('livewire.books._status-menu', ['book' => $book, 'offset' => 'top-[34px]'])
-                    </div>
-                    <a href="{{ $book->url }}" target="_blank" rel="noopener"
-                       class="font-serif text-[22px] leading-[1.22] text-ink no-underline hover:underline underline-offset-[3px] mb-[6px]">
-                        {{ $book->title ?: 'Untitled' }}
-                    </a>
-                    <div class="text-[13.5px] text-muted">{{ $book->author ?: '—' }}</div>
-                    <div class="mt-auto pt-[14px] flex items-center gap-[7px] text-[12px] text-[#B0ACA2]">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>
-                            <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        Swept {{ $book->last_checked_at?->diffForHumans() ?? 'never' }}
+                    </span>
+                    <span class="text-[13px] text-[#9B978D]">
+                        {{ $book->last_checked_at?->diffForHumans() ?? 'Never' }}
+                    </span>
+                    <div class="flex justify-end">
+                        @include('livewire.books._status-menu', ['book' => $book, 'offset' => 'top-[38px]'])
                     </div>
                 </div>
             @endforeach
@@ -408,5 +321,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
             </div>
         </div>
     </div>
+
+    <x-confirm-modal />
 
 </div>

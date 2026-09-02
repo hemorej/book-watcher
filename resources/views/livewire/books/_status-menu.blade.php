@@ -1,5 +1,7 @@
 {{-- Status menu partial: expects $book (Book model) and $offset (e.g. 'top-[38px]') --}}
-<div x-data="{ open: false }" class="relative flex gap-[2px]">
+{{-- `z-50` while open lifts this row's actions above the rows painted after it,
+     so the popover is never covered by a later row. --}}
+<div x-data="{ open: false }" class="relative flex gap-[2px]" :class="{ 'z-50': open }">
     <button @click.stop="open = !open"
             type="button"
             title="Set status"
@@ -9,10 +11,13 @@
         </svg>
     </button>
 
-    <button wire:click="deleteBook({{ $book->id }})"
-            wire:confirm="Remove '{{ addslashes($book->title ?: 'this book') }}' from the watch list?"
-            type="button"
+    <button type="button"
             title="Remove"
+            @click="$dispatch('confirm-action', {
+                message: @js('Remove \''.($book->title ?: 'this book').'\' from the watch list?'),
+                confirmLabel: 'Remove',
+                onConfirm: () => $wire.deleteBook({{ $book->id }}),
+            })"
             class="w-8 h-8 inline-flex items-center justify-center bg-transparent border-none rounded-[8px] cursor-pointer text-[#8A867C] hover:bg-[#F6E7E1] hover:text-[#A23E28] transition-colors">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M5 7h14M10 7V5h4v2M6 7l1 13h10l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>

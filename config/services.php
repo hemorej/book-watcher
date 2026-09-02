@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'google_books' => [
+        // Optional; only raises the rate limit for library:ingest lookups.
+        'key' => env('GOOGLE_BOOKS_API_KEY'),
+    ],
+
 ];
