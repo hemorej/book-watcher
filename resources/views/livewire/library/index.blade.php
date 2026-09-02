@@ -137,6 +137,16 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
         ];
     }
 
+    /** Remove a volume from the library. */
+    public function deleteVolume(int $id): void
+    {
+        LibraryBook::destroy($id);
+
+        if ($this->editingId === $id) {
+            $this->cancelEdit();
+        }
+    }
+
     /** Discard the inline edit without saving. */
     public function cancelEdit(): void
     {
@@ -262,7 +272,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
         <div class="border border-line rounded-[14px] overflow-hidden bg-white">
             {{-- Header row --}}
             <div class="grid gap-4 px-[22px] py-[14px] bg-[#FAF9F5] border-b border-line text-[11.5px] tracking-[0.06em] uppercase text-[#A29E94] font-semibold"
-                 style="grid-template-columns:1fr 1.6fr 1.1fr 80px 48px;">
+                 style="grid-template-columns:1fr 1.6fr 1.1fr 80px 72px;">
                 <span>Author</span>
                 <span>Title</span>
                 <span>Publisher</span>
@@ -273,7 +283,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
             @foreach($this->books as $volume)
                 <div wire:key="volume-{{ $volume->id }}"
                      class="grid gap-4 items-center px-[22px] py-[16px] border-b border-line-soft last:border-b-0 hover:bg-[#FBFAF6] transition-colors"
-                     style="grid-template-columns:1fr 1.6fr 1.1fr 80px 48px;">
+                     style="grid-template-columns:1fr 1.6fr 1.1fr 80px 72px;">
                     @if($editingId === $volume->id)
                         {{-- Inline edit --}}
                         <input wire:model="editRow.author" type="text" aria-label="Author"
@@ -303,11 +313,19 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
                         <span class="font-serif text-[18px] leading-[1.25] text-ink">{{ $volume->title ?: 'Untitled' }}</span>
                         <span class="text-[14px] text-muted">{{ $volume->publisher ?: 'Unknown publisher' }}</span>
                         <span class="text-[14px] text-muted text-right" style="font-variant-numeric:tabular-nums;">{{ $volume->year ?: '—' }}</span>
-                        <div class="flex justify-end">
+                        <div class="flex justify-end gap-[2px]">
                             <button wire:click="startEdit({{ $volume->id }})" type="button" title="Edit"
                                     class="w-8 h-8 inline-flex items-center justify-center bg-transparent border-none rounded-[8px] cursor-pointer text-[#8A867C] hover:bg-toolbar hover:text-ink transition-colors">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                     <path d="M4 20h4L18.5 9.5a2 2 0 0 0-3-3L5 17v3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                            <button wire:click="deleteVolume({{ $volume->id }})"
+                                    wire:confirm="Remove '{{ addslashes($volume->title ?: 'this volume') }}' from the library?"
+                                    type="button" title="Remove"
+                                    class="w-8 h-8 inline-flex items-center justify-center bg-transparent border-none rounded-[8px] cursor-pointer text-[#8A867C] hover:bg-[#F6E7E1] hover:text-[#A23E28] transition-colors">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M5 7h14M10 7V5h4v2M6 7l1 13h10l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </button>
                         </div>

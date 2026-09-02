@@ -102,6 +102,16 @@ test('a row can be edited inline', function () {
         ->year->toBe(2010);
 });
 
+test('a volume can be deleted', function () {
+    $this->actingAs(User::factory()->create());
+
+    $volume = LibraryBook::factory()->create();
+
+    Volt::test('library.index')->call('deleteVolume', $volume->id);
+
+    expect(LibraryBook::find($volume->id))->toBeNull();
+});
+
 test('an inline edit that clears author and title is rejected', function () {
     $this->actingAs(User::factory()->create());
 
