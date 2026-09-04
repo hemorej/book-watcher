@@ -7,14 +7,14 @@
 
         @php $onLibrary = request()->routeIs('library'); @endphp
 
-        <header class="sticky top-0 z-40 flex items-center justify-between h-16 px-7 border-b border-line"
+        <header class="sticky top-0 z-40 flex items-center justify-between h-16 px-4 md:px-7 border-b border-line"
                 style="background:rgba(251,250,247,0.85);backdrop-filter:blur(10px);">
             <a href="{{ route('books') }}" class="flex items-center gap-[11px] no-underline" wire:navigate>
                 <x-app-logo />
             </a>
 
-            {{-- Section switcher --}}
-            <nav class="flex items-center gap-1 bg-toolbar border border-[#E7E4DB] rounded-[11px] p-[3px]">
+            {{-- Section switcher (desktop only — moves to the bottom tab bar on mobile) --}}
+            <nav class="hidden md:flex items-center gap-1 bg-toolbar border border-[#E7E4DB] rounded-[11px] p-[3px]">
                 <a href="{{ route('books') }}" wire:navigate
                    @class([
                        'inline-flex items-center gap-[7px] px-[15px] py-[7px] rounded-[8px] font-semibold text-[13.5px] no-underline transition-colors',
@@ -44,13 +44,13 @@
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button type="submit"
-                        class="flex items-center gap-[9px] bg-transparent border-none cursor-pointer px-[6px] py-[5px] rounded-[10px] transition-colors hover:bg-[#F1EFE8]"
+                        class="flex items-center gap-[9px] bg-transparent border-none cursor-pointer px-[6px] py-[5px] rounded-[10px] transition-colors hover:bg-[#F1EFE8] min-w-11 min-h-11 md:min-w-0 md:min-h-0 justify-center"
                         title="Sign out">
                     <span class="w-[30px] h-[30px] rounded-full bg-ink text-[#F4F0E6] inline-flex items-center justify-center font-semibold text-[13px] shrink-0">
                         {{ auth()->user()->initials() }}
                     </span>
-                    <span class="text-[14px] font-medium text-text-soft hidden sm:block">{{ auth()->user()->name }}</span>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" class="text-faint" aria-hidden="true">
+                    <span class="text-[14px] font-medium text-text-soft hidden md:block">{{ auth()->user()->name }}</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" class="text-faint hidden md:block" aria-hidden="true">
                         <path d="m7 9 5-5 5 5M7 15l5 5 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </button>
@@ -58,6 +58,37 @@
         </header>
 
         {{ $slot }}
+
+        {{-- Bottom tab bar (mobile only) — replaces the segmented switcher below md --}}
+        <nav class="md:hidden fixed left-0 right-0 bottom-0 z-50 flex gap-[6px] border-t border-line"
+             style="background:rgba(251,250,247,0.95);backdrop-filter:blur(12px);padding:6px 12px calc(10px + env(safe-area-inset-bottom));">
+            <a href="{{ route('books') }}" wire:navigate
+               @class([
+                   'flex-1 flex flex-col items-center justify-center gap-1 rounded-[12px] no-underline transition-colors',
+                   'bg-white text-ink' => ! $onLibrary,
+                   'bg-transparent text-[#86837A]' => $onLibrary,
+               ])
+               style="min-height:52px;">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="1.6"/>
+                    <circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.6"/>
+                </svg>
+                <span class="font-semibold uppercase" style="font-size:11.5px;letter-spacing:0.03em;">Watch</span>
+            </a>
+            <a href="{{ route('library') }}" wire:navigate
+               @class([
+                   'flex-1 flex flex-col items-center justify-center gap-1 rounded-[12px] no-underline transition-colors',
+                   'bg-white text-ink' => $onLibrary,
+                   'bg-transparent text-[#86837A]' => ! $onLibrary,
+               ])
+               style="min-height:52px;">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M4 5h6v14H4zM14 5h6v14h-6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                    <path d="M4 9h6M14 9h6" stroke="currentColor" stroke-width="1.6"/>
+                </svg>
+                <span class="font-semibold uppercase" style="font-size:11.5px;letter-spacing:0.03em;">Library</span>
+            </a>
+        </nav>
 
         @fluxScripts
     </body>

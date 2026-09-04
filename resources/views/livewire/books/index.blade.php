@@ -137,23 +137,23 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
      x-data="{ showAdd: false }"
      @close-add-modal.window="showAdd = false">
 
-    <main class="mx-auto px-7 pt-10 pb-20" style="max-width:1060px;">
+    <main class="mx-auto px-4 pt-6 pb-24 md:px-7 md:pt-10 md:pb-20" style="max-width:1060px;">
 
         {{-- Page header --}}
-        <div class="flex items-end justify-between gap-6 flex-wrap mb-[26px]">
+        <div class="flex flex-col items-stretch gap-[18px] md:flex-row md:items-end md:justify-between md:gap-6 md:flex-wrap mb-[26px]">
             <div>
-                <h1 class="font-serif text-[38px] font-medium tracking-[-0.02em] text-ink mb-2">Watch List</h1>
+                <h1 class="font-serif text-[30px] md:text-[38px] font-medium tracking-[-0.02em] text-ink mb-2">Watch List</h1>
                 <p class="text-[14.5px] text-muted">
                     {{ $this->books->count() }} titles
                     &middot; {{ $this->availableCount }} available
                     &middot; last swept {{ $this->lastSwept }}
                 </p>
             </div>
-            <div class="flex items-center gap-[10px]">
+            <div class="flex items-center gap-[10px] w-full md:w-auto">
                 {{-- Check now --}}
                 <button wire:click="checkAll"
                         wire:loading.attr="disabled"
-                        class="inline-flex items-center gap-2 px-4 py-[10px] bg-white text-text-soft border border-line-strong rounded-[10px] font-semibold text-[14px] cursor-pointer transition-colors hover:bg-[#F6F4EE] disabled:opacity-60">
+                        class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-[10px] bg-white text-text-soft border border-line-strong rounded-[10px] font-semibold text-[14px] cursor-pointer transition-colors hover:bg-[#F6F4EE] disabled:opacity-60">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 12a9 9 0 0 1-15 6.7L3 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                         <path d="M21 4v4h-4M3 20v-4h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -164,7 +164,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
 
                 {{-- Add book --}}
                 <button @click="showAdd = true; $wire.resetRows()"
-                        class="inline-flex items-center gap-2 px-4 py-[10px] bg-ink text-ink-cream border-none rounded-[10px] font-semibold text-[14px] cursor-pointer transition-colors hover:bg-ink-hover">
+                        class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-[10px] bg-ink text-ink-cream border-none rounded-[10px] font-semibold text-[14px] cursor-pointer transition-colors hover:bg-ink-hover">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                     </svg>
@@ -182,10 +182,10 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
 
         @else
 
-        {{-- ===== LEDGER ===== --}}
+        {{-- ===== LEDGER (desktop) ===== --}}
         {{-- No `overflow-hidden` here: it would clip an open status popover. The
              header and last row round their own outer corners instead. --}}
-        <div class="border border-line rounded-[14px] bg-white">
+        <div class="hidden md:block border border-line rounded-[14px] bg-white">
             {{-- Header row --}}
             <div class="grid gap-0 px-[22px] py-[14px] bg-[#FAF9F5] border-b border-line rounded-t-[14px] text-[11.5px] tracking-[0.06em] uppercase text-[#A29E94] font-semibold"
                  style="grid-template-columns:1.1fr 1.4fr 150px 150px 84px;">
@@ -221,6 +221,34 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
             @endforeach
         </div>
 
+        {{-- ===== CARD LIST (mobile) ===== --}}
+        <div class="md:hidden flex flex-col gap-[10px]">
+            @foreach($this->books as $book)
+                @php $s = $book->status->value === 'available' ? 'available' : ($book->status->value === 'unavailable' ? 'unavailable' : 'unsure'); @endphp
+                <div class="relative bg-white border border-line rounded-[14px]" style="padding:14px 15px 11px;">
+                    <div class="text-[11.5px] font-semibold tracking-[0.05em] uppercase text-[#A29E94] mb-[5px]">
+                        {{ $book->author ?: '—' }}
+                    </div>
+                    <a href="{{ $book->url }}" target="_blank" rel="noopener"
+                       class="block font-serif text-[21px] leading-[1.22] text-ink no-underline mb-[12px]">
+                        {{ $book->title ?: 'Untitled' }}
+                    </a>
+                    <div class="flex items-center justify-between">
+                        <div class="flex flex-col items-start gap-[5px]">
+                            <span class="status-badge badge-{{ $s }}">
+                                <span class="status-dot dot-{{ $s }}"></span>
+                                {{ $book->status->label() }}
+                            </span>
+                            <span class="text-[12.5px] text-[#A8A49B]">
+                                Checked {{ $book->last_checked_at?->diffForHumans() ?? 'never' }}
+                            </span>
+                        </div>
+                        @include('livewire.books._status-menu', ['book' => $book, 'mobile' => true])
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
         @endif
 
     </main>
@@ -228,12 +256,11 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
     {{-- ===== ADD BOOK MODAL ===== --}}
     <div x-show="showAdd"
          x-cloak
-         class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-12 px-5"
+         class="fixed inset-0 z-50 flex items-end md:items-start justify-center overflow-y-auto p-0 md:py-12 md:px-5"
          style="background:rgba(28,25,18,0.32);backdrop-filter:blur(2px);">
         <div @click="showAdd = false" class="fixed inset-0" aria-hidden="true"></div>
 
-        <div class="relative w-full bg-white rounded-[18px] shadow-[0_24px_60px_rgba(20,18,12,0.26)] px-[30px] py-7"
-             style="max-width:560px;">
+        <div class="relative w-full max-w-[560px] bg-white rounded-t-[20px] md:rounded-[18px] shadow-[0_24px_60px_rgba(20,18,12,0.26)] overflow-y-auto max-h-[92vh] md:max-h-none pt-[22px] px-[18px] pb-[calc(26px+env(safe-area-inset-bottom))] md:pt-7 md:px-[30px] md:pb-[26px]">
 
             {{-- Header --}}
             <div class="flex items-start justify-between mb-1">
@@ -266,7 +293,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
                             Book {{ $index + 1 }}
                         </div>
 
-                        <div class="grid grid-cols-2 gap-[14px]">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-[14px]">
                             <div>
                                 <label class="block font-semibold text-[12.5px] text-[#46433C] mb-[6px]">Author</label>
                                 <input wire:model.blur="rows.{{ $index }}.author"
@@ -309,7 +336,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
             </button>
 
             {{-- Footer --}}
-            <div class="flex items-center justify-end gap-[10px] mt-[26px] pt-5 border-t border-line-soft">
+            <div class="flex flex-col-reverse items-stretch md:flex-row md:items-center md:justify-end gap-[10px] mt-[26px] pt-5 border-t border-line-soft">
                 <button @click="showAdd = false" type="button"
                         class="px-[18px] py-[11px] bg-transparent border-none font-semibold text-[14px] text-muted cursor-pointer rounded-[10px] hover:bg-toolbar hover:text-ink transition-colors">
                     Cancel

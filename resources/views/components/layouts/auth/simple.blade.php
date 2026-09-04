@@ -6,8 +6,8 @@
     <body class="min-h-screen bg-paper antialiased" style="-webkit-font-smoothing:antialiased;">
         <div class="flex min-h-screen">
 
-            {{-- Brand panel --}}
-            <div class="hidden lg:flex grow-0 shrink-0 basis-[44%] max-w-[560px] bg-brand-panel border-r border-[#E7E2D6] flex-col justify-between"
+            {{-- Brand panel (hidden below 760px — a phone would push the form below the fold) --}}
+            <div class="hidden md:flex grow-0 shrink-0 basis-[44%] max-w-[560px] bg-brand-panel border-r border-[#E7E2D6] flex-col justify-between"
                  style="padding:44px 52px;">
                 <div class="flex items-center gap-[11px]">
                     <span class="inline-flex w-[34px] h-[34px] rounded-[8px] bg-ink items-center justify-center">
@@ -34,8 +34,19 @@
             </div>
 
             {{-- Form panel --}}
-            <div class="flex-1 flex items-center justify-center px-7 py-10">
+            <div class="flex-1 flex items-center justify-center pt-8 px-5 pb-11 md:pt-10 md:px-7 md:pb-10">
                 <div class="w-full max-w-[368px]">
+                    {{-- Compact logo lockup (mobile only — the brand panel already carries the mark on desktop) --}}
+                    <a href="{{ route('books') }}" wire:navigate
+                       class="flex md:hidden items-center gap-[10px] no-underline mb-[30px]">
+                        <span class="inline-flex w-8 h-8 rounded-[8px] bg-ink items-center justify-center shrink-0">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M8 5h8M8 19h8M12 5v14" stroke="#F4F0E6" stroke-width="1.7" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <span class="font-serif text-[21px] font-medium tracking-[-0.01em] text-ink">Imprint</span>
+                    </a>
+
                     {{ $slot }}
                 </div>
             </div>

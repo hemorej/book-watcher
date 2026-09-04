@@ -249,12 +249,12 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
 <div x-data="{ showAddVolume: false }"
      @close-add-volume-modal.window="showAddVolume = false">
 
-    <main class="mx-auto px-7 pt-10 pb-20" style="max-width:1060px;">
+    <main class="mx-auto px-4 pt-6 pb-24 md:px-7 md:pt-10 md:pb-20" style="max-width:1060px;">
 
         {{-- Page header --}}
-        <div class="flex items-end justify-between gap-6 flex-wrap mb-[26px]">
+        <div class="flex flex-col items-stretch gap-[18px] md:flex-row md:items-end md:justify-between md:gap-6 md:flex-wrap mb-[26px]">
             <div>
-                <h1 class="font-serif text-[38px] font-medium tracking-[-0.02em] text-ink mb-2">Library</h1>
+                <h1 class="font-serif text-[30px] md:text-[38px] font-medium tracking-[-0.02em] text-ink mb-2">Library</h1>
                 <p class="text-[14.5px] text-muted">
                     {{ $this->total }} {{ Str::plural('volume', $this->total) }}
                     &middot; {{ $this->publisherCount }} {{ Str::plural('publisher', $this->publisherCount) }}
@@ -262,7 +262,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
                 </p>
             </div>
             <button @click="showAddVolume = true; $wire.resetVol()"
-                    class="inline-flex items-center gap-2 px-4 py-[10px] bg-ink text-ink-cream border-none rounded-[10px] font-semibold text-[14px] cursor-pointer transition-colors hover:bg-ink-hover">
+                    class="w-full md:w-auto inline-flex items-center justify-center gap-2 px-4 py-[10px] bg-ink text-ink-cream border-none rounded-[10px] font-semibold text-[14px] cursor-pointer transition-colors hover:bg-ink-hover">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                 </svg>
@@ -271,8 +271,8 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
         </div>
 
         {{-- Toolbar: search + sort --}}
-        <div class="flex items-center justify-between gap-[14px] flex-wrap mb-[18px]">
-            <div class="relative flex-1 min-w-[220px] max-w-[320px]">
+        <div class="flex flex-col items-stretch md:flex-row md:items-center md:justify-between gap-[14px] md:flex-wrap mb-[18px]">
+            <div class="relative flex-1 min-w-0 md:min-w-[220px] max-w-none md:max-w-[320px]">
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#B0ACA2] inline-flex" aria-hidden="true">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                         <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.6"/>
@@ -283,7 +283,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
                        type="search"
                        placeholder="Search author, title, publisher"
                        aria-label="Search the library"
-                       class="w-full py-[10px] pl-9 pr-[13px] border border-line-strong rounded-[10px] bg-white font-sans text-[14px] text-ink focus:outline-none focus:border-ink focus:shadow-[0_0_0_3px_rgba(26,25,22,0.06)]" />
+                       class="w-full py-[10px] pl-9 pr-[13px] border border-line-strong rounded-[10px] bg-white font-sans text-[16px] text-ink focus:outline-none focus:border-ink focus:shadow-[0_0_0_3px_rgba(26,25,22,0.06)]" />
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-[12px] tracking-[0.06em] uppercase text-faint font-semibold">Sort</span>
@@ -318,8 +318,8 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
             <p class="text-[13px] text-[#A23E28] mb-2">{{ $message }}</p>
         @enderror
 
-        {{-- ===== LEDGER ===== --}}
-        <div class="border border-line rounded-[14px] overflow-hidden bg-white">
+        {{-- ===== LEDGER (desktop) ===== --}}
+        <div class="hidden md:block border border-line rounded-[14px] overflow-hidden bg-white">
             {{-- Header row --}}
             <div class="grid gap-4 px-[22px] py-[14px] bg-[#FAF9F5] border-b border-line text-[11.5px] tracking-[0.06em] uppercase text-[#A29E94] font-semibold"
                  style="grid-template-columns:1fr 1.6fr 1.1fr 80px 72px;">
@@ -416,6 +416,25 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
             @endforeach
         </div>
 
+        {{-- ===== CARD LIST (mobile) ===== --}}
+        <div class="md:hidden flex flex-col gap-[10px]">
+            @foreach($this->books as $volume)
+                <div wire:key="volume-card-{{ $volume->id }}" class="bg-white border border-line rounded-[14px]" style="padding:14px 15px;">
+                    <div class="text-[11.5px] font-semibold tracking-[0.05em] uppercase text-[#A29E94] mb-[5px]">
+                        {{ $volume->author ?: '—' }}
+                    </div>
+                    <div class="font-serif text-[20px] leading-[1.22] text-ink mb-[7px]">
+                        {{ $volume->title ?: 'Untitled' }}
+                    </div>
+                    <div class="flex items-baseline gap-2 text-[13px] text-[#8A867C]">
+                        <span>{{ $volume->publisher ?: 'Unknown publisher' }}</span>
+                        <span class="text-[#CFC9BC]">&middot;</span>
+                        <span style="font-variant-numeric:tabular-nums;">{{ $volume->year ?: '—' }}</span>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
         @endif
 
     </main>
@@ -423,12 +442,11 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
     {{-- ===== ADD VOLUME MODAL ===== --}}
     <div x-show="showAddVolume"
          x-cloak
-         class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-16 px-5"
+         class="fixed inset-0 z-50 flex items-end md:items-start justify-center overflow-y-auto p-0 md:py-16 md:px-5"
          style="background:rgba(28,25,18,0.32);backdrop-filter:blur(2px);">
         <div @click="showAddVolume = false" class="fixed inset-0" aria-hidden="true"></div>
 
-        <div class="relative w-full bg-white rounded-[18px] shadow-[0_24px_60px_rgba(20,18,12,0.26)]"
-             style="max-width:500px;padding:28px 30px 26px;">
+        <div class="relative w-full max-w-[500px] bg-white rounded-t-[20px] md:rounded-[18px] shadow-[0_24px_60px_rgba(20,18,12,0.26)] overflow-y-auto max-h-[92vh] md:max-h-none pt-[22px] px-[18px] pb-[calc(26px+env(safe-area-inset-bottom))] md:pt-7 md:px-[30px] md:pb-[26px]">
 
             {{-- Header --}}
             <div class="flex items-start justify-between mb-1">
@@ -442,7 +460,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
             </div>
             <p class="text-[14px] text-muted mb-[22px]">A book you already own. Nothing here is watched.</p>
 
-            <div class="grid grid-cols-2 gap-[14px]">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-[14px]">
                 <div>
                     <label class="block font-semibold text-[12.5px] text-[#46433C] mb-[6px]">Author</label>
                     <input wire:model="vol.author" wire:keydown.enter="saveVolume" @keydown.escape="showAddVolume = false" type="text" placeholder="Robert Adams" class="imprint-input-sm" />
@@ -476,7 +494,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
             </div>
 
             {{-- Footer --}}
-            <div class="flex items-center justify-end gap-[10px] mt-[26px] pt-5 border-t border-line-soft">
+            <div class="flex flex-col-reverse items-stretch md:flex-row md:items-center md:justify-end gap-[10px] mt-[26px] pt-5 border-t border-line-soft">
                 <button @click="showAddVolume = false" type="button"
                         class="px-[18px] py-[11px] bg-transparent border-none font-semibold text-[14px] text-muted cursor-pointer rounded-[10px] hover:bg-toolbar hover:text-ink transition-colors">
                     Cancel

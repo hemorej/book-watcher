@@ -98,7 +98,7 @@
         border-radius: 10px;
         background: white;
         font-family: var(--font-sans);
-        font-size: 15px;
+        font-size: 16px;
         color: #1A1916;
     }
     .imprint-input::placeholder { color: #B6B2A8; }
@@ -115,7 +115,7 @@
         border-radius: 9px;
         background: white;
         font-family: var(--font-sans);
-        font-size: 14.5px;
+        font-size: 16px;
         color: #1A1916;
     }
     .imprint-input-sm::placeholder { color: #B6B2A8; }
