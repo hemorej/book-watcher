@@ -10,33 +10,39 @@ test('supports libraryman urls only', function () {
         ->and($checker->supports('https://mackbooks.co.uk/products/some-book'))->toBeFalse();
 });
 
-test('detects available when any edition lacks the out class', function () {
+test('detects available from a euro price marker', function () {
     $checker = new LibrarymanChecker;
 
     $html = <<<'HTML'
-        <span class="btn btn-add out">Out of print</span>
-        <span class="btn btn-add">Add to cart</span>
+        <p>&euro;50</span><br /><small>First edition</small></p>
+        <a class="btn btn-add" href="https://www.paypal.com/cgi-bin/webscr" role="button">Add to cart</a>
         HTML;
 
     expect($checker->check($html, 'https://www.libraryman.se/gerry-johansson-antarktis'))
         ->toBe(BookStatus::Available);
 });
 
-test('detects unavailable when every edition is out of print', function () {
+test('detects available from a non-disabled add-to-cart button', function () {
     $checker = new LibrarymanChecker;
 
-    $html = <<<'HTML'
-        <span class="btn btn-add out">Out of print</span>
-        <span class="btn btn-add out">Out of print</span>
-        HTML;
+    $html = '<a class="btn btn-add" href="https://www.paypal.com/cgi-bin/webscr" role="button">Add to cart</a>';
+
+    expect($checker->check($html, 'https://www.libraryman.se/gerry-johansson-antarktis'))
+        ->toBe(BookStatus::Available);
+});
+
+test('detects unavailable when the add-to-cart button is disabled and no price is shown', function () {
+    $checker = new LibrarymanChecker;
+
+    $html = '<a class="btn btn-add disabled" role="button">Out of print</a>';
 
     expect($checker->check($html, 'https://www.libraryman.se/gerry-johansson-antarktis'))
         ->toBe(BookStatus::Unavailable);
 });
 
-test('returns unsure when no edition buttons are found', function () {
+test('returns unavailable when neither marker is found', function () {
     $checker = new LibrarymanChecker;
 
     expect($checker->check('<div>nothing here</div>', 'https://www.libraryman.se/gerry-johansson-antarktis'))
-        ->toBe(BookStatus::Unsure);
+        ->toBe(BookStatus::Unavailable);
 });

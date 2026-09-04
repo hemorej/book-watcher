@@ -14,19 +14,25 @@ class SuperlaboChecker implements CheckerInterface
     }
 
     /**
-     * Shopify renders the add-to-cart button as "Sold out" when a variant is
-     * unavailable, "Add to cart" otherwise.
+     * Available if the page shows a dollar price (e.g. "$53.00") or a
+     * "product__add-to-cart" button that isn't disabled. Text elsewhere on
+     * the page (e.g. JS strings like "Sold out") is ignored — only the
+     * button element itself is checked.
      */
     public function check(string $pageContent, string $url): BookStatus
     {
-        if (Str::contains($pageContent, 'Sold out', ignoreCase: true)) {
-            return BookStatus::Unavailable;
-        }
-
-        if (Str::contains($pageContent, 'Add to cart', ignoreCase: true)) {
+        if (preg_match('/\$\s?\d/', $pageContent) === 1) {
             return BookStatus::Available;
         }
 
-        return BookStatus::Unsure;
+        preg_match_all('/<button[^>]*class="[^"]*product__add-to-cart[^"]*"[^>]*>/i', $pageContent, $matches);
+
+        foreach ($matches[0] as $button) {
+            if (! Str::contains($button, 'disabled')) {
+                return BookStatus::Available;
+            }
+        }
+
+        return BookStatus::Unavailable;
     }
 }

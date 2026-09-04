@@ -14,21 +14,19 @@ class LibrarymanChecker implements CheckerInterface
     }
 
     /**
-     * Each edition has its own "btn-add" cart button; an "out" class marks
-     * that edition "Out of print". Available if any edition lacks it.
+     * Available if the page shows a euro price (e.g. "€50") or a "btn-add"
+     * cart link that isn't disabled.
      */
     public function check(string $pageContent, string $url): BookStatus
     {
-        preg_match_all('/<span class="btn btn-add( out)?">/', $pageContent, $matches);
-
-        $buttons = $matches[0] ?? [];
-
-        if ($buttons === []) {
-            return BookStatus::Unsure;
+        if (preg_match('/(?:€|&euro;)\s?\d/', $pageContent) === 1) {
+            return BookStatus::Available;
         }
 
-        foreach ($buttons as $index => $button) {
-            if ($matches[1][$index] === '') {
+        preg_match_all('/<a[^>]*class="[^"]*btn-add[^"]*"[^>]*>/i', $pageContent, $matches);
+
+        foreach ($matches[0] as $button) {
+            if (! Str::contains($button, 'disabled')) {
                 return BookStatus::Available;
             }
         }
