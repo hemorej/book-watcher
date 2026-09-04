@@ -3,14 +3,23 @@
     <head>
         @include('partials.head')
     </head>
-    <body class="min-h-screen bg-paper antialiased" style="-webkit-font-smoothing:antialiased;">
+    <body class="min-h-screen bg-paper antialiased overflow-x-hidden" style="-webkit-font-smoothing:antialiased;" x-data="{ scrolled: false }" @scroll.window="scrolled = window.scrollY > 48">
 
         @php $onLibrary = request()->routeIs('library'); @endphp
 
         <header class="sticky top-0 z-40 flex items-center justify-between h-16 px-4 md:px-7 border-b border-line"
                 style="background:rgba(251,250,247,0.85);backdrop-filter:blur(10px);">
-            <a href="{{ route('books') }}" class="flex items-center gap-[11px] no-underline" wire:navigate>
+            <a href="{{ route('books') }}" class="flex items-center gap-[11px] no-underline min-w-0" wire:navigate>
                 <x-app-logo />
+                <span class="text-[15px] font-medium text-muted whitespace-nowrap overflow-hidden transition-all duration-200"
+                      x-cloak
+                      x-show="scrolled"
+                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter-start="opacity-0 -translate-x-1"
+                      x-transition:enter-end="opacity-100 translate-x-0"
+                      x-transition:leave="transition ease-in duration-150"
+                      x-transition:leave-start="opacity-100 translate-x-0"
+                      x-transition:leave-end="opacity-0 -translate-x-1">— {{ $title ?? '' }}</span>
             </a>
 
             {{-- Section switcher (desktop only — moves to the bottom tab bar on mobile) --}}
@@ -65,28 +74,28 @@
             <a href="{{ route('books') }}" wire:navigate
                @class([
                    'flex-1 flex flex-col items-center justify-center gap-1 rounded-[12px] no-underline transition-colors',
-                   'bg-white text-ink' => ! $onLibrary,
-                   'bg-transparent text-[#86837A]' => $onLibrary,
+                   'bg-white text-ink shadow-[0_1px_2px_rgba(20,18,12,0.10)]' => ! $onLibrary,
+                   'bg-transparent text-[#ADA89D]' => $onLibrary,
                ])
                style="min-height:52px;">
                 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="1.6"/>
-                    <circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="{{ $onLibrary ? '1.4' : '1.8' }}"/>
+                    <circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="{{ $onLibrary ? '1.4' : '1.8' }}"/>
                 </svg>
-                <span class="font-semibold uppercase" style="font-size:11.5px;letter-spacing:0.03em;">Watch</span>
+                <span @class(['uppercase', 'font-bold' => ! $onLibrary, 'font-medium' => $onLibrary]) style="font-size:11.5px;letter-spacing:0.03em;">Watch</span>
             </a>
             <a href="{{ route('library') }}" wire:navigate
                @class([
                    'flex-1 flex flex-col items-center justify-center gap-1 rounded-[12px] no-underline transition-colors',
-                   'bg-white text-ink' => $onLibrary,
-                   'bg-transparent text-[#86837A]' => ! $onLibrary,
+                   'bg-white text-ink shadow-[0_1px_2px_rgba(20,18,12,0.10)]' => $onLibrary,
+                   'bg-transparent text-[#ADA89D]' => ! $onLibrary,
                ])
                style="min-height:52px;">
                 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M4 5h6v14H4zM14 5h6v14h-6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-                    <path d="M4 9h6M14 9h6" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="M4 5h6v14H4zM14 5h6v14h-6" stroke="currentColor" stroke-width="{{ $onLibrary ? '1.8' : '1.4' }}" stroke-linejoin="round"/>
+                    <path d="M4 9h6M14 9h6" stroke="currentColor" stroke-width="{{ $onLibrary ? '1.8' : '1.4' }}"/>
                 </svg>
-                <span class="font-semibold uppercase" style="font-size:11.5px;letter-spacing:0.03em;">Library</span>
+                <span @class(['uppercase', 'font-bold' => $onLibrary, 'font-medium' => ! $onLibrary]) style="font-size:11.5px;letter-spacing:0.03em;">Library</span>
             </a>
         </nav>
 
