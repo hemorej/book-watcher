@@ -14,16 +14,15 @@ class MackChecker implements CheckerInterface
     }
 
     /**
-     * MACK marks unreleased titles "Available to pre-order"; once that phrase
-     * is gone the book ships, so its absence is treated as Available.
+     * A price string (e.g. "£55.00 GBP") or an "Add to cart" button means the
+     * book is in stock and available; anything else → Unavailable.
      */
     public function check(string $pageContent, string $url): BookStatus
     {
-        // Mack shows "Available to pre-order" while a book is unreleased; absence means it ships now
-        if (Str::contains($pageContent, 'Available to pre-order')) {
-            return BookStatus::Unavailable;
+        if (preg_match('/£\s*[\d.,]+/', $pageContent) || Str::contains($pageContent, 'Add to cart', ignoreCase: true)) {
+            return BookStatus::Available;
         }
 
-        return BookStatus::Available;
+        return BookStatus::Unavailable;
     }
 }

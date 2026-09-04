@@ -14,8 +14,9 @@ class SteidlChecker implements CheckerInterface
     }
 
     /**
-     * Reads the `.headline-left` banner: "Free shipping" → Available,
-     * "Not yet published" → Unavailable, anything else → Unsure.
+     * Reads the `.headline-left` banner: "Free shipping" or a price (e.g. "€ 280.00")
+     * → Available; "out of print"/"unavailable"/"not yet published"/"pre-order" → Unavailable;
+     * anything else → Unsure.
      */
     public function check(string $pageContent, string $url): BookStatus
     {
@@ -25,11 +26,11 @@ class SteidlChecker implements CheckerInterface
 
         $headline = $matches[0] ?? '';
 
-        if (Str::contains($headline, 'Free shipping')) {
+        if (Str::contains($headline, 'Free shipping') || preg_match('/€\s*[\d.,]+/', $headline)) {
             return BookStatus::Available;
         }
 
-        if (Str::contains($headline, 'Not yet published')) {
+        if (Str::contains($headline, ['out of print', 'unavailable', 'not yet published', 'pre-order'], ignoreCase: true)) {
             return BookStatus::Unavailable;
         }
 
