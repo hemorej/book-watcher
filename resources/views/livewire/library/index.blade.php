@@ -68,7 +68,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
     #[Computed]
     public function newest(): string
     {
-        $latest = LibraryBook::max('acquired_at') ?? LibraryBook::max('created_at');
+        $latest = LibraryBook::whereNotNull('acquired_at')->max('acquired_at');
 
         return $latest ? Carbon::parse($latest)->format('M Y') : '—';
     }
@@ -286,13 +286,13 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
                      style="grid-template-columns:1fr 1.6fr 1.1fr 80px 72px;">
                     @if($editingId === $volume->id)
                         {{-- Inline edit --}}
-                        <input wire:model="editRow.author" type="text" aria-label="Author"
+                        <input wire:model="editRow.author" wire:keydown.enter="saveEdit" wire:keydown.escape="cancelEdit" type="text" aria-label="Author"
                                class="imprint-input-sm" style="padding:8px 10px;font-size:13.5px;" />
-                        <input wire:model="editRow.title" type="text" aria-label="Title"
+                        <input wire:model="editRow.title" wire:keydown.enter="saveEdit" wire:keydown.escape="cancelEdit" type="text" aria-label="Title"
                                class="imprint-input-sm" style="padding:8px 10px;font-size:13.5px;" />
-                        <input wire:model="editRow.publisher" type="text" aria-label="Publisher"
+                        <input wire:model="editRow.publisher" wire:keydown.enter="saveEdit" wire:keydown.escape="cancelEdit" type="text" aria-label="Publisher"
                                class="imprint-input-sm" style="padding:8px 10px;font-size:13.5px;" />
-                        <input wire:model="editRow.year" type="text" inputmode="numeric" aria-label="Year"
+                        <input wire:model="editRow.year" wire:keydown.enter="saveEdit" wire:keydown.escape="cancelEdit" type="text" inputmode="numeric" aria-label="Year"
                                class="imprint-input-sm" style="padding:8px 10px;font-size:13.5px;text-align:right;" />
                         <div class="flex justify-end gap-[2px]">
                             <button wire:click="saveEdit" type="button" title="Save"
@@ -366,19 +366,19 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
             <div class="grid grid-cols-2 gap-[14px]">
                 <div>
                     <label class="block font-semibold text-[12.5px] text-[#46433C] mb-[6px]">Author</label>
-                    <input wire:model="vol.author" type="text" placeholder="Robert Adams" class="imprint-input-sm" />
+                    <input wire:model="vol.author" wire:keydown.enter="saveVolume" @keydown.escape="showAddVolume = false" type="text" placeholder="Robert Adams" class="imprint-input-sm" />
                 </div>
                 <div>
                     <label class="block font-semibold text-[12.5px] text-[#46433C] mb-[6px]">Title</label>
-                    <input wire:model="vol.title" type="text" placeholder="Summer Nights" class="imprint-input-sm" />
+                    <input wire:model="vol.title" wire:keydown.enter="saveVolume" @keydown.escape="showAddVolume = false" type="text" placeholder="Summer Nights" class="imprint-input-sm" />
                 </div>
                 <div>
                     <label class="block font-semibold text-[12.5px] text-[#46433C] mb-[6px]">Publisher</label>
-                    <input wire:model="vol.publisher" type="text" placeholder="Steidl" class="imprint-input-sm" />
+                    <input wire:model="vol.publisher" wire:keydown.enter="saveVolume" @keydown.escape="showAddVolume = false" type="text" placeholder="Steidl" class="imprint-input-sm" />
                 </div>
                 <div>
                     <label class="block font-semibold text-[12.5px] text-[#46433C] mb-[6px]">Year</label>
-                    <input wire:model="vol.year" type="text" inputmode="numeric" placeholder="2009" class="imprint-input-sm" />
+                    <input wire:model="vol.year" wire:keydown.enter="saveVolume" @keydown.escape="showAddVolume = false" type="text" inputmode="numeric" placeholder="2009" class="imprint-input-sm" />
                 </div>
             </div>
 
