@@ -270,8 +270,8 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
             </button>
         </div>
 
-        {{-- Toolbar: search + sort --}}
-        <div class="flex flex-col items-stretch md:flex-row md:items-center md:justify-between gap-[14px] md:flex-wrap mb-[18px]">
+        {{-- Toolbar: search + sort — one row at every width --}}
+        <div class="flex items-center justify-between flex-nowrap gap-[8px] md:gap-[14px] mb-[18px]">
             <div class="relative flex-1 min-w-0 md:min-w-[220px] max-w-none md:max-w-[320px]">
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#B0ACA2] inline-flex" aria-hidden="true">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -285,8 +285,8 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
                        aria-label="Search the library"
                        class="w-full py-[10px] pl-9 pr-[13px] border border-line-strong rounded-[10px] bg-white font-sans text-[16px] text-ink focus:outline-none focus:border-ink focus:shadow-[0_0_0_3px_rgba(26,25,22,0.06)]" />
             </div>
-            <div class="flex items-center gap-3">
-                <span class="text-[12px] tracking-[0.06em] uppercase text-faint font-semibold">Sort</span>
+            <div class="flex-none flex items-center gap-3">
+                <span class="hidden md:inline text-[12px] tracking-[0.06em] uppercase text-faint font-semibold">Sort</span>
                 <div class="inline-flex bg-toolbar border border-[#E7E4DB] rounded-[10px] p-[3px] gap-[2px]">
                     <button wire:click="$set('libSort', 'author')"
                             type="button"
@@ -417,19 +417,21 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
         </div>
 
         {{-- ===== CARD LIST (mobile) ===== --}}
-        <div class="md:hidden flex flex-col gap-[10px]">
+        <div class="md:hidden flex flex-col gap-[8px]">
             @foreach($this->books as $volume)
-                <div wire:key="volume-card-{{ $volume->id }}" class="bg-white border border-line rounded-[14px]" style="padding:14px 15px;">
-                    <div class="text-[11.5px] font-semibold tracking-[0.05em] uppercase text-[#A29E94] mb-[5px]">
-                        {{ $volume->author ?: '—' }}
+                <div wire:key="volume-card-{{ $volume->id }}" class="bg-white border border-line rounded-[14px]" style="padding:10px 14px 11px;">
+                    {{-- Row 1: author · publisher · year --}}
+                    <div class="flex items-baseline gap-[7px] mb-[2px] whitespace-nowrap">
+                        <span class="text-[11.5px] font-semibold tracking-[0.05em] uppercase text-[#A29E94] shrink-0">{{ $volume->author ?: '—' }}</span>
+                        <span class="text-[11.5px] font-normal text-[#CFC9BC] shrink-0">&middot;</span>
+                        <span class="text-[11.5px] font-semibold tracking-[0.05em] uppercase text-[#B4B0A6] overflow-hidden text-ellipsis min-w-0">{{ $volume->publisher ?: 'Unknown publisher' }}</span>
+                        <span class="text-[11.5px] font-normal text-[#CFC9BC] shrink-0">&middot;</span>
+                        <span class="text-[11.5px] font-semibold tracking-[0.05em] uppercase text-[#B4B0A6] shrink-0" style="font-variant-numeric:tabular-nums;">{{ $volume->year ?: '—' }}</span>
                     </div>
-                    <div class="font-serif text-[20px] leading-[1.22] text-ink mb-[7px]">
+
+                    {{-- Row 2: title --}}
+                    <div class="font-serif text-[20px] leading-[1.2] text-ink">
                         {{ $volume->title ?: 'Untitled' }}
-                    </div>
-                    <div class="flex items-baseline gap-2 text-[13px] text-[#8A867C]">
-                        <span>{{ $volume->publisher ?: 'Unknown publisher' }}</span>
-                        <span class="text-[#CFC9BC]">&middot;</span>
-                        <span style="font-variant-numeric:tabular-nums;">{{ $volume->year ?: '—' }}</span>
                     </div>
                 </div>
             @endforeach

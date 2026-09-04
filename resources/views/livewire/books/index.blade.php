@@ -222,27 +222,34 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
         </div>
 
         {{-- ===== CARD LIST (mobile) ===== --}}
-        <div class="md:hidden flex flex-col gap-[10px]">
+        <div class="md:hidden flex flex-col gap-[8px]">
             @foreach($this->books as $book)
-                @php $s = $book->status->value === 'available' ? 'available' : ($book->status->value === 'unavailable' ? 'unavailable' : 'unsure'); @endphp
-                <div class="relative bg-white border border-line rounded-[14px]" style="padding:14px 15px 11px;">
-                    <div class="text-[11.5px] font-semibold tracking-[0.05em] uppercase text-[#A29E94] mb-[5px]">
-                        {{ $book->author ?: '—' }}
-                    </div>
-                    <a href="{{ $book->url }}" target="_blank" rel="noopener"
-                       class="block font-serif text-[21px] leading-[1.22] text-ink no-underline mb-[12px]">
-                        {{ $book->title ?: 'Untitled' }}
-                    </a>
-                    <div class="flex items-center justify-between">
-                        <div class="flex flex-col items-start gap-[5px]">
-                            <span class="status-badge badge-{{ $s }}">
+                @php
+                    $s = $book->status->value === 'available' ? 'available' : ($book->status->value === 'unavailable' ? 'unavailable' : 'unsure');
+                    $sColor = ['available' => '#2C6B4F', 'unavailable' => '#A23E28', 'unsure' => '#736E64'][$s];
+                @endphp
+                <div class="relative bg-white border border-line rounded-[14px]" style="padding:10px 8px 10px 14px;">
+                    {{-- Row 1: author · status --}}
+                    <div class="flex items-center justify-between gap-[10px] mb-[2px] whitespace-nowrap">
+                        <span class="text-[11.5px] font-semibold tracking-[0.05em] uppercase text-[#A29E94] overflow-hidden text-ellipsis min-w-0">
+                            {{ $book->author ?: '—' }}
+                        </span>
+                        <span class="flex-none inline-flex items-center gap-[7px] text-[12px] text-[#A8A49B]">
+                            <span class="inline-flex items-center gap-[5px]">
                                 <span class="status-dot dot-{{ $s }}"></span>
-                                {{ $book->status->label() }}
+                                <span class="font-semibold" style="color:{{ $sColor }};">{{ $book->status->label() }}</span>
                             </span>
-                            <span class="text-[12.5px] text-[#A8A49B]">
-                                Checked {{ $book->last_checked_at?->diffForHumans() ?? 'never' }}
-                            </span>
-                        </div>
+                            <span class="text-[#CFC9BC]">&middot;</span>
+                            <span>{{ $book->last_checked_at?->diffForHumans() ?? 'never' }}</span>
+                        </span>
+                    </div>
+
+                    {{-- Row 2: title · actions --}}
+                    <div class="flex items-center justify-between gap-[8px]">
+                        <a href="{{ $book->url }}" target="_blank" rel="noopener"
+                           class="font-serif text-[21px] leading-[1.2] text-ink no-underline">
+                            {{ $book->title ?: 'Untitled' }}
+                        </a>
                         @include('livewire.books._status-menu', ['book' => $book, 'mobile' => true])
                     </div>
                 </div>

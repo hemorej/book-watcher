@@ -30,7 +30,7 @@
     <div x-show="open"
          @click.outside="open = false"
          x-cloak
-         class="absolute {{ $mobile ? 'right-[12px] bottom-[56px]' : 'right-0 '.$offset }} z-30 w-[214px] bg-white border border-line rounded-[12px] shadow-[0_14px_34px_rgba(20,18,12,0.14)] p-[7px]">
+         class="absolute {{ $mobile ? 'right-[12px] bottom-[50px]' : 'right-0 '.$offset }} z-30 w-[214px] bg-white border border-line rounded-[12px] shadow-[0_14px_34px_rgba(20,18,12,0.14)] p-[7px]">
 
         <div class="text-[11px] font-semibold tracking-[0.07em] uppercase text-faint px-[10px] pt-[7px] pb-[5px]">
             Set status manually
