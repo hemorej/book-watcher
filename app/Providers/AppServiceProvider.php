@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Services\BookChecker\BookCheckerService;
 use App\Services\BookChecker\DefaultChecker;
+use App\Services\BookChecker\LibrarymanChecker;
 use App\Services\BookChecker\MackChecker;
 use App\Services\BookChecker\SteidlChecker;
+use App\Services\BookChecker\SuperlaboChecker;
 use App\Services\LibraryMetadata\GoogleBooksProvider;
 use App\Services\LibraryMetadata\LibraryMetadataResolver;
 use App\Services\LibraryMetadata\OpenLibraryProvider;
@@ -23,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(BookCheckerService::class, fn () => new BookCheckerService([
             new SteidlChecker,
             new MackChecker,
+            new SuperlaboChecker,
+            new LibrarymanChecker,
             new DefaultChecker,
         ]));
 
