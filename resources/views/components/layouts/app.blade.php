@@ -3,7 +3,7 @@
     <head>
         @include('partials.head')
     </head>
-    <body class="min-h-screen bg-paper antialiased overflow-x-hidden" style="-webkit-font-smoothing:antialiased;" x-data="{ scrolled: false }" @scroll.window="scrolled = window.scrollY > 48">
+    <body class="min-h-screen bg-paper antialiased overflow-x-clip" style="-webkit-font-smoothing:antialiased;" x-data="{ scrolled: false }" @scroll.window="scrolled = window.scrollY > 48">
 
         @php $onLibrary = request()->routeIs('library'); @endphp
 
