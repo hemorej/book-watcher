@@ -77,6 +77,37 @@ test('a volume with neither author nor title is ignored', function () {
     expect(LibraryBook::count())->toBe(0);
 });
 
+test('adding a volume records the isbn and acquired date', function () {
+    $this->actingAs(User::factory()->create());
+
+    Volt::test('library.index')
+        ->set('vol.author', 'Alec Soth')
+        ->set('vol.title', 'Sleeping by the Mississippi')
+        ->set('vol.isbn', '978-1-59711-131-9')
+        ->set('vol.acquired_at', 'Jan 05 2025')
+        ->call('saveVolume')
+        ->assertHasNoErrors();
+
+    $volume = LibraryBook::sole();
+
+    expect($volume->isbn)->toBe('978-1-59711-131-9')
+        ->and($volume->acquired_at->format('M d Y'))->toBe('Jan 05 2025');
+});
+
+test('adding a volume rejects a malformed isbn, year and acquired date', function () {
+    $this->actingAs(User::factory()->create());
+
+    Volt::test('library.index')
+        ->set('vol.author', 'Alec Soth')
+        ->set('vol.isbn', 'not an isbn!')
+        ->set('vol.year', 'abcd')
+        ->set('vol.acquired_at', 'not a date')
+        ->call('saveVolume')
+        ->assertHasErrors(['vol.isbn', 'vol.year', 'vol.acquired_at']);
+
+    expect(LibraryBook::count())->toBe(0);
+});
+
 test('a row can be edited inline', function () {
     $this->actingAs(User::factory()->create());
 
@@ -100,6 +131,30 @@ test('a row can be edited inline', function () {
         ->title->toBe('Summer Nights, Walking')
         ->publisher->toBe('Aperture Foundation')
         ->year->toBe(2010);
+});
+
+test('an inline edit can set the isbn and acquired date, and rejects a malformed one', function () {
+    $this->actingAs(User::factory()->create());
+
+    $volume = LibraryBook::factory()->create(['author' => 'Robert Adams', 'title' => 'Summer Nights']);
+
+    Volt::test('library.index')
+        ->call('startEdit', $volume->id)
+        ->set('editRow.isbn', '978-1-59711-131-9')
+        ->set('editRow.acquired_at', 'Jan 05 2025')
+        ->call('saveEdit')
+        ->assertSet('editingId', null);
+
+    expect($volume->fresh())
+        ->isbn->toBe('978-1-59711-131-9')
+        ->and($volume->fresh()->acquired_at->format('M d Y'))->toBe('Jan 05 2025');
+
+    Volt::test('library.index')
+        ->call('startEdit', $volume->id)
+        ->set('editRow.acquired_at', 'not a date')
+        ->call('saveEdit')
+        ->assertHasErrors(['editRow.acquired_at'])
+        ->assertSet('editingId', $volume->id);
 });
 
 test('a volume can be deleted', function () {

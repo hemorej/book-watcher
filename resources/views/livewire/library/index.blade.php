@@ -19,7 +19,39 @@ use Livewire\Volt\Component;
 new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class extends Component
 {
     /** Draft fields for the "Add volume" modal. */
-    public array $vol = ['author' => '', 'title' => '', 'publisher' => '', 'year' => ''];
+    public array $vol = ['author' => '', 'title' => '', 'publisher' => '', 'year' => '', 'isbn' => '', 'acquired_at' => ''];
+
+    /** How the "acquired at" field is typed and displayed, e.g. "Jan 05 2025". */
+    protected const ACQUIRED_AT_FORMAT = 'M d Y';
+
+    /**
+     * Validation rules shared by the "Add volume" modal and the inline edit
+     * row. $prefix is the Livewire property the fields live under ('vol' or
+     * 'editRow').
+     */
+    protected function volumeRules(string $prefix): array
+    {
+        return [
+            "$prefix.author" => ['nullable', 'string', 'max:255'],
+            "$prefix.title" => ['nullable', 'string', 'max:255'],
+            "$prefix.publisher" => ['nullable', 'string', 'max:255'],
+            "$prefix.year" => ['nullable', 'integer', 'min:1450', 'max:'.(now()->year + 1)],
+            "$prefix.isbn" => ['nullable', 'regex:/^[A-Za-z0-9-]+$/', 'max:32'],
+            "$prefix.acquired_at" => ['nullable', 'date_format:'.self::ACQUIRED_AT_FORMAT],
+        ];
+    }
+
+    /** Friendlier messages for the rules above, keyed for the given $prefix. */
+    protected function volumeMessages(string $prefix): array
+    {
+        return [
+            "$prefix.year.integer" => 'Enter a valid four-digit year.',
+            "$prefix.year.min" => 'Enter a valid four-digit year.',
+            "$prefix.year.max" => 'Enter a valid four-digit year.',
+            "$prefix.isbn.regex" => 'ISBN may only contain letters, numbers and dashes.',
+            "$prefix.acquired_at.date_format" => 'Enter a date like "Jan 05 2025".',
+        ];
+    }
 
     /** Client-typed search string; matches author, title or publisher. */
     public string $libQuery = '';
@@ -76,13 +108,14 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
     /** Reset the modal fields to blank. */
     public function resetVol(): void
     {
-        $this->vol = ['author' => '', 'title' => '', 'publisher' => '', 'year' => ''];
+        $this->vol = ['author' => '', 'title' => '', 'publisher' => '', 'year' => '', 'isbn' => '', 'acquired_at' => ''];
+        $this->resetErrorBag(['vol', 'vol.*']);
     }
 
     /**
      * Persist the drafted volume. A submit with neither author nor title is
      * ignored. Missing publisher/year fall back to placeholder values; a new
-     * record is stamped as acquired now.
+     * record is stamped as acquired now unless an "acquired at" date was given.
      */
     public function saveVolume(): void
     {
@@ -96,16 +129,23 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
             return;
         }
 
+        $this->validate($this->volumeRules('vol'), $this->volumeMessages('vol'));
+
         $year = trim((string) ($this->vol['year'] ?? ''));
+        $isbn = trim($this->vol['isbn'] ?? '');
+        $acquiredAt = trim($this->vol['acquired_at'] ?? '');
 
         LibraryBook::create([
             'author' => $author,
             'title' => $title ?: 'Untitled',
             'publisher' => trim($this->vol['publisher'] ?? '') ?: 'Unknown publisher',
             'year' => ctype_digit($year) ? (int) $year : null,
+            'isbn' => $isbn ?: null,
             'edition' => 'Edition not recorded',
             'condition' => 'Unrecorded',
-            'acquired_at' => now(),
+            'acquired_at' => $acquiredAt
+                ? Carbon::createFromFormat(self::ACQUIRED_AT_FORMAT, $acquiredAt)
+                : now(),
         ]);
 
         $this->resetVol();
@@ -116,7 +156,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
     public ?int $editingId = null;
 
     /** Working copy of the row being edited. */
-    public array $editRow = ['author' => '', 'title' => '', 'publisher' => '', 'year' => ''];
+    public array $editRow = ['author' => '', 'title' => '', 'publisher' => '', 'year' => '', 'isbn' => '', 'acquired_at' => ''];
 
     /** Open a row for inline editing, seeded with its current values. */
     public function startEdit(int $id): void
@@ -127,13 +167,15 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
             return;
         }
 
-        $this->resetErrorBag('editRow');
+        $this->resetErrorBag(['editRow', 'editRow.*']);
         $this->editingId = $id;
         $this->editRow = [
             'author' => (string) $volume->author,
             'title' => (string) $volume->title,
             'publisher' => (string) $volume->publisher,
             'year' => (string) ($volume->year ?? ''),
+            'isbn' => (string) ($volume->isbn ?? ''),
+            'acquired_at' => $volume->acquired_at ? $volume->acquired_at->format(self::ACQUIRED_AT_FORMAT) : '',
         ];
     }
 
@@ -151,14 +193,14 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
     public function cancelEdit(): void
     {
         $this->editingId = null;
-        $this->editRow = ['author' => '', 'title' => '', 'publisher' => '', 'year' => ''];
-        $this->resetErrorBag('editRow');
+        $this->editRow = ['author' => '', 'title' => '', 'publisher' => '', 'year' => '', 'isbn' => '', 'acquired_at' => ''];
+        $this->resetErrorBag(['editRow', 'editRow.*']);
     }
 
     /**
      * Persist the inline edit. Same field rules as {@see saveVolume()}: an
-     * author or a title is required; blank publisher/year fall back to their
-     * placeholders.
+     * author or a title is required; blank publisher/year/isbn/acquired_at
+     * fall back to their placeholders (acquired_at falls back to null).
      */
     public function saveEdit(): void
     {
@@ -183,13 +225,21 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
             return;
         }
 
+        $this->validate($this->volumeRules('editRow'), $this->volumeMessages('editRow'));
+
         $year = trim((string) ($this->editRow['year'] ?? ''));
+        $isbn = trim($this->editRow['isbn'] ?? '');
+        $acquiredAt = trim($this->editRow['acquired_at'] ?? '');
 
         $volume->update([
             'author' => $author,
             'title' => $title ?: 'Untitled',
             'publisher' => trim($this->editRow['publisher'] ?? '') ?: 'Unknown publisher',
             'year' => ctype_digit($year) ? (int) $year : null,
+            'isbn' => $isbn ?: null,
+            'acquired_at' => $acquiredAt
+                ? Carbon::createFromFormat(self::ACQUIRED_AT_FORMAT, $acquiredAt)
+                : null,
         ]);
 
         $this->cancelEdit();
@@ -282,55 +332,84 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
 
             @foreach($this->books as $volume)
                 <div wire:key="volume-{{ $volume->id }}"
-                     class="grid gap-4 items-center px-[22px] py-[16px] border-b border-line-soft last:border-b-0 hover:bg-[#FBFAF6] transition-colors"
-                     style="grid-template-columns:1fr 1.6fr 1.1fr 80px 72px;">
+                     class="border-b border-line-soft last:border-b-0 hover:bg-[#FBFAF6] transition-colors">
+                    <div class="grid gap-4 items-center px-[22px] py-[16px]"
+                         style="grid-template-columns:1fr 1.6fr 1.1fr 80px 72px;">
+                        @if($editingId === $volume->id)
+                            {{-- Inline edit --}}
+                            <input wire:model="editRow.author" wire:keydown.enter="saveEdit" wire:keydown.escape="cancelEdit" type="text" aria-label="Author"
+                                   class="imprint-input-sm" style="padding:8px 10px;font-size:13.5px;" />
+                            <input wire:model="editRow.title" wire:keydown.enter="saveEdit" wire:keydown.escape="cancelEdit" type="text" aria-label="Title"
+                                   class="imprint-input-sm" style="padding:8px 10px;font-size:13.5px;" />
+                            <input wire:model="editRow.publisher" wire:keydown.enter="saveEdit" wire:keydown.escape="cancelEdit" type="text" aria-label="Publisher"
+                                   class="imprint-input-sm" style="padding:8px 10px;font-size:13.5px;" />
+                            <input wire:model="editRow.year" wire:keydown.enter="saveEdit" wire:keydown.escape="cancelEdit" type="text" inputmode="numeric" aria-label="Published year"
+                                   class="imprint-input-sm" style="padding:8px 10px;font-size:13.5px;text-align:right;" />
+                            <div class="flex justify-end gap-[2px]">
+                                <button wire:click="saveEdit" type="button" title="Save"
+                                        class="w-8 h-8 inline-flex items-center justify-center bg-transparent border-none rounded-[8px] cursor-pointer text-[#8A867C] hover:bg-[#E7F0E9] hover:text-[#2C6B4F] transition-colors">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <path d="m5 12 5 5 9-11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </button>
+                                <button wire:click="cancelEdit" type="button" title="Cancel"
+                                        class="w-8 h-8 inline-flex items-center justify-center bg-transparent border-none rounded-[8px] cursor-pointer text-[#8A867C] hover:bg-toolbar hover:text-ink transition-colors">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        @else
+                            <span class="text-[14.5px] text-[#56524A]">{{ $volume->author ?: '—' }}</span>
+                            <span class="font-serif text-[18px] leading-[1.25] text-ink">{{ $volume->title ?: 'Untitled' }}</span>
+                            <span class="text-[14px] text-muted">{{ $volume->publisher ?: 'Unknown publisher' }}</span>
+                            <span class="text-[14px] text-muted text-right" style="font-variant-numeric:tabular-nums;">{{ $volume->year ?: '—' }}</span>
+                            <div class="flex justify-end gap-[2px]">
+                                <button wire:click="startEdit({{ $volume->id }})" type="button" title="Edit"
+                                        class="w-8 h-8 inline-flex items-center justify-center bg-transparent border-none rounded-[8px] cursor-pointer text-[#8A867C] hover:bg-toolbar hover:text-ink transition-colors">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <path d="M4 20h4L18.5 9.5a2 2 0 0 0-3-3L5 17v3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                                    </svg>
+                                </button>
+                                <button type="button" title="Remove"
+                                        @click="$dispatch('confirm-action', {
+                                            message: @js('Remove \''.($volume->title ?: 'this volume').'\' from the library?'),
+                                            confirmLabel: 'Remove',
+                                            onConfirm: () => $wire.deleteVolume({{ $volume->id }}),
+                                        })"
+                                        class="w-8 h-8 inline-flex items-center justify-center bg-transparent border-none rounded-[8px] cursor-pointer text-[#8A867C] hover:bg-[#F6E7E1] hover:text-[#A23E28] transition-colors">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <path d="M5 7h14M10 7V5h4v2M6 7l1 13h10l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        @endif
+                    </div>
+
                     @if($editingId === $volume->id)
-                        {{-- Inline edit --}}
-                        <input wire:model="editRow.author" wire:keydown.enter="saveEdit" wire:keydown.escape="cancelEdit" type="text" aria-label="Author"
-                               class="imprint-input-sm" style="padding:8px 10px;font-size:13.5px;" />
-                        <input wire:model="editRow.title" wire:keydown.enter="saveEdit" wire:keydown.escape="cancelEdit" type="text" aria-label="Title"
-                               class="imprint-input-sm" style="padding:8px 10px;font-size:13.5px;" />
-                        <input wire:model="editRow.publisher" wire:keydown.enter="saveEdit" wire:keydown.escape="cancelEdit" type="text" aria-label="Publisher"
-                               class="imprint-input-sm" style="padding:8px 10px;font-size:13.5px;" />
-                        <input wire:model="editRow.year" wire:keydown.enter="saveEdit" wire:keydown.escape="cancelEdit" type="text" inputmode="numeric" aria-label="Year"
-                               class="imprint-input-sm" style="padding:8px 10px;font-size:13.5px;text-align:right;" />
-                        <div class="flex justify-end gap-[2px]">
-                            <button wire:click="saveEdit" type="button" title="Save"
-                                    class="w-8 h-8 inline-flex items-center justify-center bg-transparent border-none rounded-[8px] cursor-pointer text-[#8A867C] hover:bg-[#E7F0E9] hover:text-[#2C6B4F] transition-colors">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                    <path d="m5 12 5 5 9-11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
-                            <button wire:click="cancelEdit" type="button" title="Cancel"
-                                    class="w-8 h-8 inline-flex items-center justify-center bg-transparent border-none rounded-[8px] cursor-pointer text-[#8A867C] hover:bg-toolbar hover:text-ink transition-colors">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                    <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-                                </svg>
-                            </button>
-                        </div>
-                    @else
-                        <span class="text-[14.5px] text-[#56524A]">{{ $volume->author ?: '—' }}</span>
-                        <span class="font-serif text-[18px] leading-[1.25] text-ink">{{ $volume->title ?: 'Untitled' }}</span>
-                        <span class="text-[14px] text-muted">{{ $volume->publisher ?: 'Unknown publisher' }}</span>
-                        <span class="text-[14px] text-muted text-right" style="font-variant-numeric:tabular-nums;">{{ $volume->year ?: '—' }}</span>
-                        <div class="flex justify-end gap-[2px]">
-                            <button wire:click="startEdit({{ $volume->id }})" type="button" title="Edit"
-                                    class="w-8 h-8 inline-flex items-center justify-center bg-transparent border-none rounded-[8px] cursor-pointer text-[#8A867C] hover:bg-toolbar hover:text-ink transition-colors">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                    <path d="M4 20h4L18.5 9.5a2 2 0 0 0-3-3L5 17v3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
-                            <button type="button" title="Remove"
-                                    @click="$dispatch('confirm-action', {
-                                        message: @js('Remove \''.($volume->title ?: 'this volume').'\' from the library?'),
-                                        confirmLabel: 'Remove',
-                                        onConfirm: () => $wire.deleteVolume({{ $volume->id }}),
-                                    })"
-                                    class="w-8 h-8 inline-flex items-center justify-center bg-transparent border-none rounded-[8px] cursor-pointer text-[#8A867C] hover:bg-[#F6E7E1] hover:text-[#A23E28] transition-colors">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                    <path d="M5 7h14M10 7V5h4v2M6 7l1 13h10l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
+                        {{-- Inline edit: extra fields, same 2-column layout as the "Add volume" modal --}}
+                        <div class="px-[22px] pb-[16px] -mt-1">
+                            <div class="grid grid-cols-2 gap-[14px]" style="max-width:420px;">
+                                <div>
+                                    <label class="block font-semibold text-[11.5px] text-[#46433C] mb-[4px]">ISBN</label>
+                                    <input wire:model="editRow.isbn" wire:keydown.enter="saveEdit" wire:keydown.escape="cancelEdit" type="text" aria-label="ISBN"
+                                           class="imprint-input-sm" style="padding:8px 10px;font-size:13.5px;" />
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-[11.5px] text-[#46433C] mb-[4px]">Acquired</label>
+                                    <input wire:model="editRow.acquired_at" wire:keydown.enter="saveEdit" wire:keydown.escape="cancelEdit" type="text" placeholder="Jan 05 2025" aria-label="Acquired at"
+                                           class="imprint-input-sm" style="padding:8px 10px;font-size:13.5px;" />
+                                </div>
+                            </div>
+                            @error('editRow.year')
+                                <p class="text-[12px] text-[#A23E28] mt-[7px]">{{ $message }}</p>
+                            @enderror
+                            @error('editRow.isbn')
+                                <p class="text-[12px] text-[#A23E28] mt-[7px]">{{ $message }}</p>
+                            @enderror
+                            @error('editRow.acquired_at')
+                                <p class="text-[12px] text-[#A23E28] mt-[7px]">{{ $message }}</p>
+                            @enderror
                         </div>
                     @endif
                 </div>
@@ -367,18 +446,32 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
                 <div>
                     <label class="block font-semibold text-[12.5px] text-[#46433C] mb-[6px]">Author</label>
                     <input wire:model="vol.author" wire:keydown.enter="saveVolume" @keydown.escape="showAddVolume = false" type="text" placeholder="Robert Adams" class="imprint-input-sm" />
+                    @error('vol.author') <p class="text-[12px] text-[#A23E28] mt-[7px]">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="block font-semibold text-[12.5px] text-[#46433C] mb-[6px]">Title</label>
                     <input wire:model="vol.title" wire:keydown.enter="saveVolume" @keydown.escape="showAddVolume = false" type="text" placeholder="Summer Nights" class="imprint-input-sm" />
+                    @error('vol.title') <p class="text-[12px] text-[#A23E28] mt-[7px]">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="block font-semibold text-[12.5px] text-[#46433C] mb-[6px]">Publisher</label>
                     <input wire:model="vol.publisher" wire:keydown.enter="saveVolume" @keydown.escape="showAddVolume = false" type="text" placeholder="Steidl" class="imprint-input-sm" />
+                    @error('vol.publisher') <p class="text-[12px] text-[#A23E28] mt-[7px]">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <label class="block font-semibold text-[12.5px] text-[#46433C] mb-[6px]">Year</label>
+                    <label class="block font-semibold text-[12.5px] text-[#46433C] mb-[6px]">Published</label>
                     <input wire:model="vol.year" wire:keydown.enter="saveVolume" @keydown.escape="showAddVolume = false" type="text" inputmode="numeric" placeholder="2009" class="imprint-input-sm" />
+                    @error('vol.year') <p class="text-[12px] text-[#A23E28] mt-[7px]">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="block font-semibold text-[12.5px] text-[#46433C] mb-[6px]">ISBN <span class="font-normal text-[#B0ACA2]">(optional)</span></label>
+                    <input wire:model="vol.isbn" wire:keydown.enter="saveVolume" @keydown.escape="showAddVolume = false" type="text" placeholder="978-3-86930-163-9" class="imprint-input-sm" />
+                    @error('vol.isbn') <p class="text-[12px] text-[#A23E28] mt-[7px]">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="block font-semibold text-[12.5px] text-[#46433C] mb-[6px]">Acquired <span class="font-normal text-[#B0ACA2]">(optional)</span></label>
+                    <input wire:model="vol.acquired_at" wire:keydown.enter="saveVolume" @keydown.escape="showAddVolume = false" type="text" placeholder="Jan 05 2025" class="imprint-input-sm" />
+                    @error('vol.acquired_at') <p class="text-[12px] text-[#A23E28] mt-[7px]">{{ $message }}</p> @enderror
                 </div>
             </div>
 
