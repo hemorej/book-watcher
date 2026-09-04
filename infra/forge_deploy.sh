@@ -2,6 +2,10 @@ $CREATE_RELEASE()
 
 cd $FORGE_RELEASE_DIRECTORY
 
+chown -R forge:forge storage bootstrap/cache
+find storage bootstrap/cache -type d -exec chmod 775 {} \;
+find storage bootstrap/cache -type f -exec chmod 664 {} \;
+
 $FORGE_COMPOSER install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
 $PNPM_PATH install --frozen-lockfile
