@@ -6,6 +6,7 @@ use App\Enums\BookStatus;
 use App\Mail\BookAvailable;
 use App\Models\Book;
 use App\Services\BookChecker\BookCheckerService;
+use App\Services\SecondarySource\SecondarySourceResolver;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -32,8 +33,14 @@ class CheckBookAvailability implements ShouldQueue
      * Fetch and parse the book's page, persist the new status/timestamp, log
      * any change, and send the "now available" email on a first transition
      * into Available (when app.notification_recipient is configured).
+     *
+     * When the publisher page itself isn't Available, falls back to
+     * {@see SecondarySourceResolver}: a confident, in-stock match there
+     * upgrades the status to Available; anything weaker is still recorded as
+     * a `found_at_*` link for the user to check by hand, without changing
+     * the status.
      */
-    public function handle(BookCheckerService $checker): void
+    public function handle(BookCheckerService $checker, SecondarySourceResolver $secondarySources): void
     {
         // Books with override set were manually assigned a status — skip the check
         if ($this->book->override) {
@@ -45,7 +52,25 @@ class CheckBookAvailability implements ShouldQueue
         $previousStatus = $this->book->status;
         $newStatus = $checker->check($this->book->url);
 
+        $foundAtSource = null;
+        $foundAtUrl = null;
+
+        if ($newStatus !== BookStatus::Available) {
+            $match = $secondarySources->resolve($this->book->title, $this->book->author);
+
+            if ($match !== null) {
+                $foundAtSource = $match->source;
+                $foundAtUrl = $match->url;
+
+                if ($match->isConfident() && $match->status === BookStatus::Available) {
+                    $newStatus = BookStatus::Available;
+                }
+            }
+        }
+
         $this->book->status = $newStatus;
+        $this->book->found_at_source = $foundAtSource;
+        $this->book->found_at_url = $foundAtUrl;
         $this->book->last_checked_at = now();
         $this->book->save();
 
