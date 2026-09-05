@@ -19,11 +19,66 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
     /** Draft rows for the "add books" form; one blank row by default. */
     public array $rows = [['author' => '', 'title' => '', 'url' => '']];
 
-    /** All books, Unavailable/Unsure before Available (enum value order), then by author. */
+    /** Ledger columns the header can sort by. */
+    protected const SORT_COLUMNS = ['author', 'title', 'status', 'last_checked_at'];
+
+    /** Active sort column (one of {@see SORT_COLUMNS}). */
+    public string $watchSort = 'status';
+
+    /** Active sort direction: 'asc' (A–Z) or 'desc'. */
+    public string $watchDir = 'asc';
+
+    /**
+     * All books, ordered by the current header sort. Defaults to the original
+     * ordering: Unavailable/Unsure before Available (enum value order), then by
+     * author.
+     */
     #[\Livewire\Attributes\Computed]
     public function books(): \Illuminate\Database\Eloquent\Collection
     {
-        return Book::orderBy('status')->orderBy('author')->get();
+        $col = in_array($this->watchSort, self::SORT_COLUMNS, true) ? $this->watchSort : 'status';
+        $dir = $this->watchDir === 'desc' ? 'desc' : 'asc';
+
+        $query = Book::query()->orderBy($col, $dir);
+
+        // Keep author as the tiebreaker within a status group.
+        if ($col === 'status') {
+            $query->orderBy('author');
+        }
+
+        return $query->get();
+    }
+
+    /**
+     * Sort the ledger by $column. Clicking the active column flips direction;
+     * clicking a new one starts ascending (A–Z). The view mirrors the choice to
+     * localStorage so it survives a refresh.
+     */
+    public function sortByColumn(string $column): void
+    {
+        if (! in_array($column, self::SORT_COLUMNS, true)) {
+            return;
+        }
+
+        if ($this->watchSort === $column) {
+            $this->watchDir = $this->watchDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->watchSort = $column;
+            $this->watchDir = 'asc';
+        }
+
+        $this->dispatch('watch-sort-changed', column: $this->watchSort, direction: $this->watchDir);
+    }
+
+    /** Apply a persisted sort (from localStorage) without the click-to-toggle behaviour. */
+    public function restoreSort(string $column, string $direction): void
+    {
+        if (! in_array($column, self::SORT_COLUMNS, true)) {
+            return;
+        }
+
+        $this->watchSort = $column;
+        $this->watchDir = $direction === 'desc' ? 'desc' : 'asc';
     }
 
     /** How many watched books are currently Available. */
@@ -135,6 +190,14 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
 
 <div wire:poll.5s
      x-data="{ showAdd: false }"
+     x-init="
+        try {
+            const c = localStorage.getItem('imprint.watch.sort');
+            const d = localStorage.getItem('imprint.watch.dir') || 'asc';
+            if (c && (c !== $wire.watchSort || d !== $wire.watchDir)) $wire.restoreSort(c, d);
+        } catch (e) {}
+     "
+     @watch-sort-changed.window="try { localStorage.setItem('imprint.watch.sort', $event.detail.column); localStorage.setItem('imprint.watch.dir', $event.detail.direction) } catch (e) {}"
      @close-add-modal.window="showAdd = false">
 
     <main class="mx-auto px-4 pt-6 pb-24 md:px-7 md:pt-10 md:pb-20" style="max-width:1060px;">
@@ -186,13 +249,24 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
         {{-- No `overflow-hidden` here: it would clip an open status popover. The
              header and last row round their own outer corners instead. --}}
         <div class="hidden md:block border border-line rounded-[14px] bg-white">
-            {{-- Header row --}}
-            <div class="grid gap-0 px-[22px] py-[14px] bg-[#FAF9F5] border-b border-line rounded-t-[14px] text-[11.5px] tracking-[0.06em] uppercase text-[#A29E94] font-semibold"
+            {{-- Header row — click a label to sort by that column (A–Z; click again to flip) --}}
+            @php $sortCols = ['author' => 'Author', 'title' => 'Title', 'status' => 'Status', 'last_checked_at' => 'Last checked']; @endphp
+            <div class="grid gap-0 px-[22px] py-[14px] bg-[#FAF9F5] border-b border-line rounded-t-[14px]"
                  style="grid-template-columns:1.1fr 1.4fr 150px 150px 84px;">
-                <span>Author</span>
-                <span>Title</span>
-                <span>Status</span>
-                <span>Last checked</span>
+                @foreach($sortCols as $key => $label)
+                    <button type="button" wire:click="sortByColumn('{{ $key }}')"
+                            @class([
+                                'inline-flex items-center gap-[4px] justify-self-start bg-transparent border-none p-0 font-semibold text-[11.5px] tracking-[0.06em] uppercase cursor-pointer transition-colors hover:text-ink',
+                                'text-ink' => $watchSort === $key,
+                                'text-[#A29E94]' => $watchSort !== $key,
+                            ])>
+                        {{ $label }}
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+                             class="transition-transform {{ $watchSort === $key ? 'opacity-100' : 'opacity-0' }} {{ $watchSort === $key && $watchDir === 'desc' ? 'rotate-180' : '' }}">
+                            <path d="m6 15 6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                @endforeach
                 <span></span>
             </div>
 
