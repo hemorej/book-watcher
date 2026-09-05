@@ -210,6 +210,12 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
                             <span class="status-dot dot-{{ $s }}"></span>
                             {{ $book->status->label() }}
                         </span>
+                        @if($book->found_at_url)
+                            <a href="{{ $book->found_at_url }}" target="_blank" rel="noopener"
+                               class="block text-[11.5px] text-[#9B978D] hover:underline mt-[3px]">
+                                {{ $book->status === \App\Enums\BookStatus::Available ? 'via' : 'check' }} {{ $book->found_at_source }}
+                            </a>
+                        @endif
                     </span>
                     <span class="text-[13px] text-[#9B978D]">
                         {{ $book->last_checked_at?->diffForHumans() ?? 'Never' }}
@@ -252,6 +258,13 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
                         </a>
                         @include('livewire.books._status-menu', ['book' => $book, 'mobile' => true])
                     </div>
+
+                    @if($book->found_at_url)
+                        <a href="{{ $book->found_at_url }}" target="_blank" rel="noopener"
+                           class="block text-[11.5px] text-[#9B978D] hover:underline mt-[2px]">
+                            {{ $book->status === \App\Enums\BookStatus::Available ? 'via' : 'check' }} {{ $book->found_at_source }}
+                        </a>
+                    @endif
                 </div>
             @endforeach
         </div>
