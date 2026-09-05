@@ -190,14 +190,14 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
 
 <div wire:poll.5s
      x-data="{ showAdd: false }"
-     x-init="
+     x-init="(() => {
         try {
             const c = localStorage.getItem('imprint.watch.sort');
             const d = localStorage.getItem('imprint.watch.dir') || 'asc';
             if (c && (c !== $wire.watchSort || d !== $wire.watchDir)) $wire.restoreSort(c, d);
         } catch (e) {}
-     "
-     @watch-sort-changed.window="try { localStorage.setItem('imprint.watch.sort', $event.detail.column); localStorage.setItem('imprint.watch.dir', $event.detail.direction) } catch (e) {}"
+     })()"
+     @watch-sort-changed.window="(() => { try { localStorage.setItem('imprint.watch.sort', $event.detail.column); localStorage.setItem('imprint.watch.dir', $event.detail.direction) } catch (e) {} })()"
      @close-add-modal.window="showAdd = false">
 
     <main class="mx-auto px-4 pt-6 pb-24 md:px-7 md:pt-10 md:pb-20" style="max-width:1060px;">
@@ -254,15 +254,16 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
             <div class="grid gap-0 px-[22px] py-[14px] bg-[#FAF9F5] border-b border-line rounded-t-[14px]"
                  style="grid-template-columns:1.1fr 1.4fr 150px 150px 84px;">
                 @foreach($sortCols as $key => $label)
+                    @php $active = $this->watchSort === $key; @endphp
                     <button type="button" wire:click="sortByColumn('{{ $key }}')"
                             @class([
                                 'inline-flex items-center gap-[4px] justify-self-start bg-transparent border-none p-0 font-semibold text-[11.5px] tracking-[0.06em] uppercase cursor-pointer transition-colors hover:text-ink',
-                                'text-ink' => $watchSort === $key,
-                                'text-[#A29E94]' => $watchSort !== $key,
+                                'text-ink' => $active,
+                                'text-[#A29E94]' => ! $active,
                             ])>
                         {{ $label }}
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true"
-                             class="transition-transform {{ $watchSort === $key ? 'opacity-100' : 'opacity-0' }} {{ $watchSort === $key && $watchDir === 'desc' ? 'rotate-180' : '' }}">
+                             class="transition-transform {{ $active ? 'opacity-100' : 'opacity-0' }} {{ $active && $this->watchDir === 'desc' ? 'rotate-180' : '' }}">
                             <path d="m6 15 6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </button>

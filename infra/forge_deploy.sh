@@ -24,7 +24,6 @@ $ACTIVATE_RELEASE()
 
 $RESTART_QUEUES()
 
-if [ -f /etc/php/$FORGE_PHP_VERSION/fpm/php-fpm.conf ]; then
-    ( flock -w 10 9 || exit 1
-        echo 'Restarting FPM...'; sudo -S service $FORGE_PHP_FPM reload ) 9>/tmp/fpmlock
-fi
+touch /tmp/fpmlock 2>/dev/null || true
+( flock -w 10 9 || exit 1
+    echo 'Restarting FPM...'; sudo -S service $FORGE_PHP_FPM reload ) 9</tmp/fpmlock

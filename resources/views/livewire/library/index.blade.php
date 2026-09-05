@@ -247,12 +247,12 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
 }; ?>
 
 <div x-data="{ showAddVolume: false }"
-     x-init="
+     x-init="(() => {
         try {
             const s = localStorage.getItem('imprint.library.sort');
             if (s && s !== $wire.libSort) $wire.set('libSort', s);
         } catch (e) {}
-     "
+     })()"
      @close-add-volume-modal.window="showAddVolume = false">
 
     <main class="mx-auto px-4 pt-6 pb-24 md:px-7 md:pt-10 md:pb-20" style="max-width:1060px;">
@@ -295,7 +295,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
                 <span class="hidden md:inline text-[12px] tracking-[0.06em] uppercase text-faint font-semibold">Sort</span>
                 <div class="inline-flex bg-toolbar border border-[#E7E4DB] rounded-[10px] p-[3px] gap-[2px]">
                     <button wire:click="$set('libSort', 'author')"
-                            x-on:click="try { localStorage.setItem('imprint.library.sort', 'author') } catch (e) {}"
+                            x-on:click="(() => { try { localStorage.setItem('imprint.library.sort', 'author') } catch (e) {} })()"
                             type="button"
                             @class([
                                 'px-[13px] py-[6px] rounded-[7px] font-semibold text-[13px] cursor-pointer transition-colors border-none',
@@ -303,7 +303,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
                                 'bg-transparent text-[#86837A] hover:text-ink' => $libSort !== 'author',
                             ])>Author</button>
                     <button wire:click="$set('libSort', 'title')"
-                            x-on:click="try { localStorage.setItem('imprint.library.sort', 'title') } catch (e) {}"
+                            x-on:click="(() => { try { localStorage.setItem('imprint.library.sort', 'title') } catch (e) {} })()"
                             type="button"
                             @class([
                                 'px-[13px] py-[6px] rounded-[7px] font-semibold text-[13px] cursor-pointer transition-colors border-none',
