@@ -36,7 +36,7 @@ Tests use `QUEUE_CONNECTION=sync`, `SESSION_DRIVER=array`, `CACHE_STORE=array`, 
 
 - `QUEUE_CONNECTION=database` — must be `database` (not `sync`) in production/dev for jobs to queue properly
 - `NOTIFICATION_RECIPIENT` — email address that receives availability alerts
-- `MAIL_*` — configured for SMTP; uses `log` driver in testing
+- `MAIL_MAILER=mailgun` with `MAILGUN_DOMAIN` / `MAILGUN_SECRET` (and optional `MAILGUN_ENDPOINT`, default `api.mailgun.net`) — uses `log` driver in testing
 
 ## Architecture
 

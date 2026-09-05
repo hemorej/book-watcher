@@ -15,7 +15,9 @@
         "laravel/framework": "^12.0",
         "laravel/tinker": "^3.0.2",
         "livewire/flux": "^2.1.1",
-        "livewire/volt": "^1.7.0"
+        "livewire/volt": "^1.7.0",
+        "symfony/http-client": "^7.2",
+        "symfony/mailgun-mailer": "^7.2"
     },
     "require-dev":
     {
