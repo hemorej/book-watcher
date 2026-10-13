@@ -1,2 +1,6 @@
 allowBuilds:
   esbuild: true
+
+# Security override for transitive dep flagged by Dependabot.
+overrides:
+  source-map-js: '^1.2.2'
