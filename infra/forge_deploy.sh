@@ -2,6 +2,10 @@ $CREATE_RELEASE()
 
 cd $FORGE_RELEASE_DIRECTORY
 
+# Forge clones with a token embedded in the remote URL; strip the userinfo so it
+# isn't left readable in .git/config of every release.
+git remote set-url origin "$(git remote get-url origin | sed -E 's#^(https?://)[^/@]+@#\1#')"
+
 chown -R forge:forge storage bootstrap/cache
 find storage bootstrap/cache -type d -exec chmod 775 {} \;
 find storage bootstrap/cache -type f -exec chmod 664 {} \;
