@@ -3,10 +3,11 @@
 namespace App\Services\BookChecker;
 
 use App\Enums\BookStatus;
+use App\Providers\AppServiceProvider;
 
 /**
  * One publisher's availability-parsing strategy. Implementations are stateless
- * and registered in order in {@see \App\Providers\AppServiceProvider}.
+ * and registered in order in {@see AppServiceProvider}.
  */
 interface CheckerInterface
 {

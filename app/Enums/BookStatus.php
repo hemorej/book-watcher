@@ -19,20 +19,20 @@ enum BookStatus: string
     /** Human-readable label for the status badge. */
     public function label(): string
     {
-        return match($this) {
-            self::Available   => 'Available',
+        return match ($this) {
+            self::Available => 'Available',
             self::Unavailable => 'Not Available',
-            self::Unsure      => 'Unsure',
+            self::Unsure => 'Unsure',
         };
     }
 
     /** Returns a Flux UI color name used by the status badge component. */
     public function color(): string
     {
-        return match($this) {
-            self::Available   => 'green',
+        return match ($this) {
+            self::Available => 'green',
             self::Unavailable => 'amber',
-            self::Unsure      => 'zinc',
+            self::Unsure => 'zinc',
         };
     }
 }

@@ -20,7 +20,6 @@
  * Heuristics, not proof — a flag means "verify before merging", not
  * "certain compromise".
  */
-
 $failOnWarning = getenv('FAIL_ON_NEW_RELEASE') !== 'false';
 $baseRef = getenv('BASE_REF') ?: 'origin/main';
 $minimumReleaseAgeMinutes = (int) (getenv('MINIMUM_RELEASE_AGE_MINUTES') ?: 4320); // 3 days
@@ -28,7 +27,7 @@ $minimumReleaseAgeMinutes = (int) (getenv('MINIMUM_RELEASE_AGE_MINUTES') ?: 4320
 function loadLockedPackages(string $json): array
 {
     $data = json_decode($json, true);
-    if (!is_array($data)) {
+    if (! is_array($data)) {
         return [];
     }
     $packages = [];
@@ -40,6 +39,7 @@ function loadLockedPackages(string $json): array
             ];
         }
     }
+
     return $packages;
 }
 
@@ -47,10 +47,11 @@ function getBaseLockfile(string $baseRef): ?string
 {
     $output = [];
     $exitCode = 0;
-    exec('git show ' . escapeshellarg($baseRef . ':composer.lock') . ' 2>/dev/null', $output, $exitCode);
+    exec('git show '.escapeshellarg($baseRef.':composer.lock').' 2>/dev/null', $output, $exitCode);
     if ($exitCode !== 0) {
         return null;
     }
+
     return implode("\n", $output);
 }
 
@@ -62,6 +63,7 @@ function fetchJson(string $url): ?array
         return null;
     }
     $data = json_decode($body, true);
+
     return is_array($data) ? $data : null;
 }
 
@@ -69,7 +71,7 @@ function checkPackage(string $name, string $version, ?string $lockedSource): arr
 {
     [$vendor, $pkg] = explode('/', $name, 2) + [1 => null];
     if ($pkg === null) {
-        return ['skip' => "not a vendor/package name"];
+        return ['skip' => 'not a vendor/package name'];
     }
 
     $p2 = fetchJson("https://repo.packagist.org/p2/{$vendor}/{$pkg}.json");
@@ -91,13 +93,13 @@ function checkPackage(string $name, string $version, ?string $lockedSource): arr
 
     $warnings = [];
 
-    if (!empty($release['time'])) {
+    if (! empty($release['time'])) {
         $ageMinutes = (time() - strtotime($release['time'])) / 60;
         global $minimumReleaseAgeMinutes;
         if ($ageMinutes < $minimumReleaseAgeMinutes) {
             $days = round($ageMinutes / 1440, 1);
             $warnings[] = "{$name}@{$version} was released {$days} day(s) ago, inside the "
-                . round($minimumReleaseAgeMinutes / 1440, 1) . "-day cooldown window.";
+                .round($minimumReleaseAgeMinutes / 1440, 1).'-day cooldown window.';
         }
     }
 
@@ -108,8 +110,8 @@ function checkPackage(string $name, string $version, ?string $lockedSource): arr
             $normalize = fn ($u) => rtrim(preg_replace('#^git\+|\.git$#', '', $u), '/');
             if ($normalize($registeredRepo) !== $normalize($lockedSource)) {
                 $warnings[] = "{$name}@{$version} source ({$lockedSource}) does not match the repository "
-                    . "Packagist currently has on file ({$registeredRepo}) — the package listing may have "
-                    . "been repointed to a different repo.";
+                    ."Packagist currently has on file ({$registeredRepo}) — the package listing may have "
+                    .'been repointed to a different repo.';
             }
         }
     }
@@ -137,16 +139,18 @@ function main(): void
 
     if (empty($changed)) {
         echo "No new/changed package versions introduced — nothing to check.\n";
+
         return;
     }
 
-    echo 'Checking release age and source integrity for ' . count($changed) . " changed package(s)...\n";
+    echo 'Checking release age and source integrity for '.count($changed)." changed package(s)...\n";
 
     $allWarnings = [];
     foreach ($changed as $name => $info) {
         $result = checkPackage($name, $info['version'], $info['source']);
-        if (!empty($result['skip'])) {
+        if (! empty($result['skip'])) {
             echo "  skip {$name}@{$info['version']}: {$result['skip']}\n";
+
             continue;
         }
         foreach ($result['warnings'] as $w) {
@@ -154,13 +158,13 @@ function main(): void
         }
     }
 
-    if (!empty($allWarnings)) {
+    if (! empty($allWarnings)) {
         echo "\nPotential supply-chain concerns detected:\n\n";
         foreach ($allWarnings as $w) {
             echo "::warning file=composer.lock::{$w}\n";
         }
         echo "\nVerify each flagged release against the package's official GitHub releases/changelog "
-            . "before merging.\n";
+            ."before merging.\n";
         if ($failOnWarning) {
             echo "\nFailing the check (set FAIL_ON_NEW_RELEASE=false to warn without blocking).\n";
             exit(1);
