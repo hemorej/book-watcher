@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Jobs\CheckBookAvailability;
 use App\Models\Book;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -12,7 +13,7 @@ use Illuminate\Queue\SerializesModels;
 /**
  * "Your watched book is now available" notification.
  *
- * Sent by {@see \App\Jobs\CheckBookAvailability} when a book first flips to
+ * Sent by {@see CheckBookAvailability} when a book first flips to
  * Available. Renders the `emails.book-available` Blade view with `$book` in scope.
  */
 class BookAvailable extends Mailable

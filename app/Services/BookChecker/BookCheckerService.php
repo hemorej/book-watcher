@@ -3,6 +3,7 @@
 namespace App\Services\BookChecker;
 
 use App\Enums\BookStatus;
+use App\Providers\AppServiceProvider;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\Log;
  * registered {@see CheckerInterface} that supports the URL.
  *
  * The checker list is wired up as a singleton in
- * {@see \App\Providers\AppServiceProvider::register()}; {@see DefaultChecker}
+ * {@see AppServiceProvider::register()}; {@see DefaultChecker}
  * is always last so an unrecognised URL yields Unsure rather than an error.
  */
 class BookCheckerService
@@ -32,12 +33,14 @@ class BookCheckerService
 
             if (! $response->successful()) {
                 Log::warning('book_checker.non_200_response', ['url' => $url, 'status' => $response->status()]);
+
                 return BookStatus::Unsure;
             }
 
             $content = $response->body();
         } catch (\Throwable $e) {
             Log::warning('book_checker.fetch_failed', ['url' => $url, 'error' => $e->getMessage()]);
+
             return BookStatus::Unsure;
         }
 
