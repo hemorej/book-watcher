@@ -10,16 +10,16 @@
         "dev": "vite"
     },
     "dependencies": {
-        "@tailwindcss/vite": "^4.3.4",
+        "@tailwindcss/vite": "^4.3.5",
         "autoprefixer": "^10.6.2",
-        "axios": "^1.21.0",
-        "concurrently": "^10.0.6",
+        "axios": "^1.21.1",
+        "concurrently": "^10.0.7",
         "laravel-vite-plugin": "^3.2",
-        "tailwindcss": "^4.3.4",
+        "tailwindcss": "^4.3.5",
         "vite": "^8.3"
     },
     "optionalDependencies": {
-        "@tailwindcss/oxide-linux-x64-gnu": "^4.3.4",
+        "@tailwindcss/oxide-linux-x64-gnu": "^4.3.5",
         "lightningcss-linux-x64-gnu": "^1.33.0"
     }
 }
