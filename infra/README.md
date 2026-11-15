@@ -25,7 +25,7 @@ everything specific to this app. Facts as of 2026-10-23.
 | `nginx.conf` | The vhost (`/etc/nginx/sites-available/imprint.jerome-arfouche.ca`) | By hand; `./snapshot.sh` flags drift |
 | `supervisord.conf` | The queue worker (`/etc/supervisor/conf.d/worker-1061143.conf`) | Created by Forge's *Queue* page; `./snapshot.sh` flags drift |
 | `postgres.sql` | One-time role/database grants for `imprintdb`/`imprintuser` (run as `postgres`) | By hand |
-| `forge-conf/` | Forge-generated includes, read-only reference. `site.conf` holds the PHP location (`fastcgi_pass` + `forge_fastcgi_defaults`), headers, error log and the `.`-file deny rule | Refreshed by `./snapshot.sh` |
+| `forge-conf/` | Forge-generated includes, read-only reference. `site.conf` holds the PHP location (`fastcgi_pass` + `forge_fastcgi_defaults`), headers, error log and the `.`-file deny rule | Refreshed by `./snapshot.sh` — except `before/ssl_redirect.conf`, hand-edited to `include snippets/http-redirect.conf` (bot rules before the 80 → 443 redirect), so it is a `check` file: Forge may regenerate it, re-apply if `./snapshot.sh` shows DRIFT |
 | `env.example` | Names of the variables in the server-side `.env` | — |
 | `manifest`, `snapshot.sh` | What to compare with the server, and the script | `./snapshot.sh` |
 
