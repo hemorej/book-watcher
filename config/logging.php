@@ -65,6 +65,13 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // Ships logs to Sentry Logs. Opt in per environment with
+        // SENTRY_ENABLE_LOGS=true and LOG_STACK=daily,sentry_logs.
+        'sentry_logs' => [
+            'driver' => 'sentry_logs',
+            'level' => env('LOG_LEVEL', 'info'),
+        ],
+
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),
