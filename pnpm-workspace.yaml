@@ -1,2 +1,7 @@
 allowBuilds:
   esbuild: true
+
+# Delay resolving to newly-published package versions, so a hijacked
+# publish/compromised maintainer token has a window to be caught and
+# yanked before it ever lands in a local install or CI run.
+minimumReleaseAge: 4320
