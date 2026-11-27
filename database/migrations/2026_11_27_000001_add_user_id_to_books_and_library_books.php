@@ -39,6 +39,17 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::table('library_books')
+            ->select('isbn')
+            ->whereNotNull('isbn')
+            ->groupBy('isbn')
+            ->havingRaw('COUNT(*) > 1')
+            ->exists()) {
+            throw new RuntimeException(
+                'Cannot roll back ownership: multiple library rows share an ISBN. Preserve these records and resolve duplicate ISBNs before retrying; no schema changes have been made.'
+            );
+        }
+
         Schema::table('library_books', function (Blueprint $table) {
             // The foreign key needs an index of its own before the composite one can go.
             $table->dropForeign(['user_id']);
