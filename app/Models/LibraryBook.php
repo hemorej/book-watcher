@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\LibraryBookFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
@@ -15,6 +16,7 @@ use Illuminate\Support\Carbon;
  * `php artisan library:ingest`.
  *
  * @property int $id
+ * @property int|null $user_id Owner; see the books() / libraryBooks() relations on User.
  * @property string|null $isbn Normalised 13-digit ISBN; unique. Null for a hand-entered volume.
  * @property string $title
  * @property string $author One or more authors, comma-separated.
@@ -39,4 +41,10 @@ class LibraryBook extends Model
     protected $attributes = [
         'author' => '',
     ];
+
+    /** @return BelongsTo<User, $this> */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 }

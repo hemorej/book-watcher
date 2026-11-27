@@ -12,9 +12,9 @@ test('guests are redirected from the library', function () {
 });
 
 test('the library lists the volumes a user owns', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs($user = User::factory()->create());
 
-    LibraryBook::factory()->create(['author' => 'Robert Adams', 'title' => 'Summer Nights, Walking']);
+    LibraryBook::factory()->for($user)->create(['author' => 'Robert Adams', 'title' => 'Summer Nights, Walking']);
 
     Volt::test('library.index')
         ->assertSee('Robert Adams')
@@ -22,10 +22,10 @@ test('the library lists the volumes a user owns', function () {
 });
 
 test('search filters by author, title or publisher', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs($user = User::factory()->create());
 
-    LibraryBook::factory()->create(['author' => 'Alec Soth', 'title' => 'Sleeping by the Mississippi', 'publisher' => 'MACK']);
-    LibraryBook::factory()->create(['author' => 'Sally Mann', 'title' => 'Immediate Family', 'publisher' => 'Aperture']);
+    LibraryBook::factory()->for($user)->create(['author' => 'Alec Soth', 'title' => 'Sleeping by the Mississippi', 'publisher' => 'MACK']);
+    LibraryBook::factory()->for($user)->create(['author' => 'Sally Mann', 'title' => 'Immediate Family', 'publisher' => 'Aperture']);
 
     Volt::test('library.index')
         ->set('libQuery', 'mack')
@@ -34,10 +34,10 @@ test('search filters by author, title or publisher', function () {
 });
 
 test('sort switches between author and title order', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs($user = User::factory()->create());
 
-    LibraryBook::factory()->create(['author' => 'Zoe Strauss', 'title' => 'America']);
-    LibraryBook::factory()->create(['author' => 'Ansel Adams', 'title' => 'Yosemite']);
+    LibraryBook::factory()->for($user)->create(['author' => 'Zoe Strauss', 'title' => 'America']);
+    LibraryBook::factory()->for($user)->create(['author' => 'Ansel Adams', 'title' => 'Yosemite']);
 
     $byAuthor = Volt::test('library.index')->set('libSort', 'author');
     expect($byAuthor->get('books')->pluck('author')->all())->toBe(['Ansel Adams', 'Zoe Strauss']);
@@ -47,7 +47,7 @@ test('sort switches between author and title order', function () {
 });
 
 test('adding a volume records it with fallback details', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs($user = User::factory()->create());
 
     Volt::test('library.index')
         ->set('vol.author', 'Daido Moriyama')
@@ -68,7 +68,7 @@ test('adding a volume records it with fallback details', function () {
 });
 
 test('a volume with neither author nor title is ignored', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs($user = User::factory()->create());
 
     Volt::test('library.index')
         ->set('vol.publisher', 'Steidl')
@@ -78,7 +78,7 @@ test('a volume with neither author nor title is ignored', function () {
 });
 
 test('adding a volume records the isbn and acquired date', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs($user = User::factory()->create());
 
     Volt::test('library.index')
         ->set('vol.author', 'Alec Soth')
@@ -95,7 +95,7 @@ test('adding a volume records the isbn and acquired date', function () {
 });
 
 test('adding a volume rejects a malformed isbn, year and acquired date', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs($user = User::factory()->create());
 
     Volt::test('library.index')
         ->set('vol.author', 'Alec Soth')
@@ -109,9 +109,9 @@ test('adding a volume rejects a malformed isbn, year and acquired date', functio
 });
 
 test('a row can be edited inline', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs($user = User::factory()->create());
 
-    $volume = LibraryBook::factory()->create([
+    $volume = LibraryBook::factory()->for($user)->create([
         'author' => 'Robert Adams',
         'title' => 'Summer Nights',
         'publisher' => 'Aperture',
@@ -134,9 +134,9 @@ test('a row can be edited inline', function () {
 });
 
 test('an inline edit can set the isbn and acquired date, and rejects a malformed one', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs($user = User::factory()->create());
 
-    $volume = LibraryBook::factory()->create(['author' => 'Robert Adams', 'title' => 'Summer Nights']);
+    $volume = LibraryBook::factory()->for($user)->create(['author' => 'Robert Adams', 'title' => 'Summer Nights']);
 
     Volt::test('library.index')
         ->call('startEdit', $volume->id)
@@ -158,9 +158,9 @@ test('an inline edit can set the isbn and acquired date, and rejects a malformed
 });
 
 test('a volume can be deleted', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs($user = User::factory()->create());
 
-    $volume = LibraryBook::factory()->create();
+    $volume = LibraryBook::factory()->for($user)->create();
 
     Volt::test('library.index')->call('deleteVolume', $volume->id);
 
@@ -168,9 +168,9 @@ test('a volume can be deleted', function () {
 });
 
 test('an inline edit that clears author and title is rejected', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs($user = User::factory()->create());
 
-    $volume = LibraryBook::factory()->create(['author' => 'Robert Adams', 'title' => 'Summer Nights']);
+    $volume = LibraryBook::factory()->for($user)->create(['author' => 'Robert Adams', 'title' => 'Summer Nights']);
 
     Volt::test('library.index')
         ->call('startEdit', $volume->id)
@@ -181,4 +181,42 @@ test('an inline edit that clears author and title is rejected', function () {
         ->assertSet('editingId', $volume->id);
 
     expect($volume->fresh()->title)->toBe('Summer Nights');
+});
+
+test('a user only sees their own volumes', function () {
+    $this->actingAs($user = User::factory()->create());
+
+    LibraryBook::factory()->for($user)->create(['title' => 'Mine', 'publisher' => 'MACK', 'acquired_at' => null]);
+    LibraryBook::factory()->create(['title' => 'Someone Elses', 'publisher' => 'Steidl', 'acquired_at' => now()]);
+
+    Volt::test('library.index')
+        ->assertSee('Mine')
+        ->assertDontSee('Someone Elses')
+        ->assertSee('1 volume')
+        ->assertSee('1 publisher')
+        ->assertSee('newest —');
+});
+
+test("another user's volume cannot be opened, edited or deleted", function () {
+    $volume = LibraryBook::factory()->create(['title' => 'Someone Elses']);
+
+    $this->actingAs(User::factory()->create());
+
+    Volt::test('library.index')
+        ->call('startEdit', $volume->id)
+        ->assertSet('editingId', null)
+        ->set('editingId', $volume->id)
+        ->set('editRow.title', 'Hijacked')
+        ->call('saveEdit')
+        ->call('deleteVolume', $volume->id);
+
+    expect($volume->fresh()->title)->toBe('Someone Elses');
+});
+
+test('an added volume belongs to the signed-in user', function () {
+    $this->actingAs($user = User::factory()->create());
+
+    Volt::test('library.index')->set('vol.title', 'Record')->call('saveVolume');
+
+    expect(LibraryBook::sole()->user_id)->toBe($user->id);
 });

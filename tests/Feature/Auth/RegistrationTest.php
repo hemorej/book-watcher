@@ -1,27 +1,16 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Volt\Volt;
+use Illuminate\Support\Facades\Route;
 
 uses(RefreshDatabase::class);
 
-test('registration screen can be rendered', function () {
-    $response = $this->get('/register');
+test('registration is disabled', function () {
+    $this->get('/register')->assertNotFound();
 
-    $response->assertStatus(200);
+    expect(Route::has('register'))->toBeFalse();
 });
 
-test('new users can register', function () {
-    $response = Volt::test('auth.register')
-        ->set('name', 'Test User')
-        ->set('email', 'test@example.com')
-        ->set('password', 'password')
-        ->set('password_confirmation', 'password')
-        ->call('register');
-
-    $response
-        ->assertHasNoErrors()
-        ->assertRedirect(route('books', absolute: false));
-
-    $this->assertAuthenticated();
+test('the login page does not offer to create an account', function () {
+    $this->get('/login')->assertOk()->assertDontSee('Create an account');
 });

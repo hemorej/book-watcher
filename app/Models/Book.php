@@ -4,12 +4,14 @@ namespace App\Models;
 
 use App\Enums\BookStatus;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
  * A book on the watch list.
  *
  * @property int $id
+ * @property int|null $user_id Owner; see the books() / libraryBooks() relations on User.
  * @property string $url Publisher product page the checker fetches
  * @property string $title
  * @property string $author
@@ -37,4 +39,10 @@ class Book extends Model
         'title' => '',
         'override' => false,
     ];
+
+    /** @return BelongsTo<User, $this> */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 }

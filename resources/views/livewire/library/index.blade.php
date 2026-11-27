@@ -10,7 +10,7 @@ use Livewire\Volt\Component;
 /**
  * Library page (Volt single-file component).
  *
- * A plain record of books the user owns — nothing here is watched or checked.
+ * A plain record of books the signed-in user owns — nothing here is watched or checked.
  * Volumes are added by hand through the "Add volume" modal (or bulk-loaded via
  * `php artisan library:ingest`). Search and sort run server-side over the whole
  * (small) collection; the counts in the header are always totals, not the
@@ -66,7 +66,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
         $q = trim(mb_strtolower($this->libQuery));
         $sort = in_array($this->libSort, ['author', 'title'], true) ? $this->libSort : 'author';
 
-        return LibraryBook::all()
+        return auth()->user()->libraryBooks()->get()
             ->filter(function (LibraryBook $v) use ($q) {
                 if ($q === '') {
                     return true;
@@ -82,14 +82,14 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
     #[Computed]
     public function total(): int
     {
-        return LibraryBook::count();
+        return auth()->user()->libraryBooks()->count();
     }
 
     /** Distinct publisher count across the whole collection. */
     #[Computed]
     public function publisherCount(): int
     {
-        return LibraryBook::query()
+        return auth()->user()->libraryBooks()
             ->whereNotNull('publisher')
             ->where('publisher', '!=', '')
             ->distinct()
@@ -100,7 +100,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
     #[Computed]
     public function newest(): string
     {
-        $latest = LibraryBook::whereNotNull('acquired_at')->max('acquired_at');
+        $latest = auth()->user()->libraryBooks()->whereNotNull('acquired_at')->max('acquired_at');
 
         return $latest ? Carbon::parse($latest)->format('M Y') : '—';
     }
@@ -135,7 +135,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
         $isbn = trim($this->vol['isbn'] ?? '');
         $acquiredAt = trim($this->vol['acquired_at'] ?? '');
 
-        LibraryBook::create([
+        auth()->user()->libraryBooks()->create([
             'author' => $author,
             'title' => $title ?: 'Untitled',
             'publisher' => trim($this->vol['publisher'] ?? '') ?: 'Unknown publisher',
@@ -161,7 +161,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
     /** Open a row for inline editing, seeded with its current values. */
     public function startEdit(int $id): void
     {
-        $volume = LibraryBook::find($id);
+        $volume = auth()->user()->libraryBooks()->find($id);
 
         if (! $volume) {
             return;
@@ -182,7 +182,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
     /** Remove a volume from the library. */
     public function deleteVolume(int $id): void
     {
-        LibraryBook::destroy($id);
+        auth()->user()->libraryBooks()->whereKey($id)->delete();
 
         if ($this->editingId === $id) {
             $this->cancelEdit();
@@ -208,7 +208,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Library'])] class ex
             return;
         }
 
-        $volume = LibraryBook::find($this->editingId);
+        $volume = auth()->user()->libraryBooks()->find($this->editingId);
 
         if (! $volume) {
             $this->cancelEdit();
