@@ -1,5 +1,10 @@
 name: CI
 
+# Pushes to master are deploys, so title them that way instead of GitHub's
+# default, the head commit message ("Merge pull request #…"). Expressions have
+# no substring(), so a short SHA isn't possible here; run_number is used instead.
+run-name: "${{ github.event_name == 'push' && format('Deploy to production (#{0})', github.run_number) || format('CI: {0}', github.event.pull_request.title) }}"
+
 on:
   push:
     branches:
@@ -58,6 +63,7 @@ jobs:
   # which just makes Forge deploy its configured branch. The URL lives in the
   # `production` Environment (restricted to master), not in repo-level secrets.
   deploy:
+    name: Deploy to production
     needs: checks
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
