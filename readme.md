@@ -31,6 +31,22 @@ MAIL_PASSWORD=...
 MAIL_FROM_ADDRESS=your@email.com
 ```
 
+## Accounts
+
+Registration is disabled. Create an account from the command line:
+
+```bash
+sail artisan tinker --execute="App\Models\User::create(['name' => 'You', 'email' => 'you@example.com', 'password' => 'a-strong-password']);"
+```
+
+Each account has its own watch list and library. Availability emails for all accounts go to `NOTIFICATION_RECIPIENT`.
+
+To bulk-load a library from a file of ISBNs (`--user` can be left out while only one account exists):
+
+```bash
+sail artisan library:ingest storage/app/catalog.txt --user=you@example.com
+```
+
 ## Running
 
 ```bash

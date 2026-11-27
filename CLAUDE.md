@@ -55,6 +55,10 @@ To add a new publisher, create a class implementing `CheckerInterface` and regis
 
 **`BookStatus` enum** (`app/Enums/BookStatus.php`): three cases — `Available`, `Unavailable`, `Unsure`. The `Book` model casts `status` to this enum. A book with `override = true` is skipped by the checker; its status was set manually by the user.
 
+### Accounts and ownership
+
+Registration is disabled (no `register` route); accounts are created with `artisan tinker` (see `readme.md`). `books` and `library_books` have a `user_id`, and every query goes through `auth()->user()->books()` / `->libraryBooks()`, never `Book::` or `LibraryBook::` directly in a page. ISBNs are unique per user. `library:ingest` takes `--user=<email>`. Availability emails still go to the single `NOTIFICATION_RECIPIENT`.
+
 ### Livewire/Volt component pattern
 
 All UI is Volt single-file components under `resources/views/livewire/`. PHP logic lives in the `<?php ... ?>` block at the top using `new class extends Component`. The main page is `livewire/books/index.blade.php`, registered as route `books` via `Volt::route()`.

@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\LibraryBook;
+use App\Models\User;
 use App\Services\LibraryMetadata\LibraryMetadataResolver;
 use App\Support\Isbn;
 use Illuminate\Console\Command;
@@ -11,11 +11,14 @@ use Illuminate\Support\Facades\File;
 /**
  * Populate the `library_books` table from a plain-text list of ISBNs.
  *
- *   php artisan library:ingest storage/app/catalog.txt
+ *   php artisan library:ingest storage/app/catalog.txt --user=you@example.com
+ *
+ * Volumes go into that user's library; `--user` can be left out while only one
+ * account exists.
  *
  * The file is one ISBN per line; blank lines and `#` comments are ignored.
  * Each ISBN is normalised to 13 digits ({@see Isbn}) and looked up through
- * {@see LibraryMetadataResolver}. Existing rows (matched on `isbn`) are updated,
+ * {@see LibraryMetadataResolver}. That user's existing rows (matched on `isbn`) are updated,
  * so the command is safe to re-run. Unresolved and malformed ISBNs are listed
  * at the end and written to `<file>.misses.txt`.
  */
@@ -23,6 +26,7 @@ class IngestLibrary extends Command
 {
     protected $signature = 'library:ingest
         {file : Path to a newline-delimited list of ISBNs}
+        {--user= : Email of the account that owns the volumes (optional with a single account)}
         {--dry-run : Resolve and report without writing to the database}
         {--throttle=200 : Milliseconds to pause between lookups}';
 
@@ -35,6 +39,12 @@ class IngestLibrary extends Command
         if (! File::exists($path)) {
             $this->error("File not found: {$path}");
 
+            return self::FAILURE;
+        }
+
+        $owner = $this->resolveOwner();
+
+        if ($owner === null) {
             return self::FAILURE;
         }
 
@@ -79,7 +89,7 @@ class IngestLibrary extends Command
             }
 
             if (! $dryRun) {
-                $book = LibraryBook::firstOrNew(['isbn' => $isbn]);
+                $book = $owner->libraryBooks()->firstOrNew(['isbn' => $isbn]);
                 $book->fill([
                     'title' => $meta->title,
                     'author' => $meta->authorLine(),
@@ -110,6 +120,30 @@ class IngestLibrary extends Command
         $this->reportMisses($path, $invalid, $unresolved);
 
         return self::SUCCESS;
+    }
+
+    /** The account named by --user, else the only account. Prints why when there is none. */
+    private function resolveOwner(): ?User
+    {
+        $email = $this->option('user');
+
+        if ($email !== null) {
+            $owner = User::where('email', $email)->first();
+
+            if ($owner === null) {
+                $this->error("No user with email: {$email}");
+            }
+
+            return $owner;
+        }
+
+        if (User::count() !== 1) {
+            $this->error('Pass --user=<email> to say whose library to fill.');
+
+            return null;
+        }
+
+        return User::sole();
     }
 
     /**

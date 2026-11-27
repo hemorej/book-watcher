@@ -10,7 +10,7 @@ use Livewire\Volt\Component;
 /**
  * Watch List page (Volt single-file component).
  *
- * Shows every watched book, lets the user add books in bulk via a repeating
+ * Shows the signed-in user's watched books, lets the user add books in bulk via a repeating
  * row form, manually override a status, and trigger a "sweep" that queues a
  * {@see CheckBookAvailability} job per book. The view polls every 5s
  * (`wire:poll.5s`) so statuses refresh as the queued jobs land.
@@ -29,7 +29,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
     public string $watchDir = 'asc';
 
     /**
-     * All books, ordered by the current header sort. Defaults to the original
+     * The user's books, ordered by the current header sort. Defaults to the original
      * ordering: Unavailable/Unsure before Available (enum value order), then by
      * author.
      */
@@ -39,7 +39,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
         $col = in_array($this->watchSort, self::SORT_COLUMNS, true) ? $this->watchSort : 'status';
         $dir = $this->watchDir === 'desc' ? 'desc' : 'asc';
 
-        $query = Book::query()->orderBy($col, $dir);
+        $query = auth()->user()->books()->orderBy($col, $dir);
 
         // Keep author as the tiebreaker within a status group.
         if ($col === 'status') {
@@ -81,14 +81,14 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
         $this->watchDir = $direction === 'desc' ? 'desc' : 'asc';
     }
 
-    /** How many watched books are currently Available. */
+    /** How many of the user's watched books are currently Available. */
     #[\Livewire\Attributes\Computed]
     public function availableCount(): int
     {
         return $this->books->filter(fn ($b) => $b->status === BookStatus::Available)->count();
     }
 
-    /** "2 hours ago" / "never" — most recent last_checked_at across all books. */
+    /** "2 hours ago" / "never" — most recent last_checked_at across the user's books. */
     #[\Livewire\Attributes\Computed]
     public function lastSwept(): string
     {
@@ -134,9 +134,9 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
                 return;
             }
 
-            if ($url && Book::where('url', $url)->exists()) continue;
+            if ($url && auth()->user()->books()->where('url', $url)->exists()) continue;
 
-            Book::create([
+            auth()->user()->books()->create([
                 'author' => $author,
                 'title'  => $title,
                 'url'    => $url,
@@ -151,13 +151,13 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
     /** Delete a book from the watch list. */
     public function deleteBook(int $id): void
     {
-        Book::destroy($id);
+        auth()->user()->books()->whereKey($id)->delete();
     }
 
-    /** Queue an availability check for every book (the "sweep"). */
+    /** Queue an availability check for every one of the user's books (the "sweep"). */
     public function checkAll(): void
     {
-        $books = Book::all();
+        $books = auth()->user()->books()->get();
         Log::info('book_availability.sweep_dispatched', ['count' => $books->count()]);
         $books->each(fn (Book $book) => CheckBookAvailability::dispatch($book));
     }
@@ -168,7 +168,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
      */
     public function setStatus(int $id, string $status): void
     {
-        $book = Book::findOrFail($id);
+        $book = auth()->user()->books()->findOrFail($id);
         $book->status = BookStatus::from($status);
         $book->override = true;
         $book->last_checked_at = now();
@@ -180,7 +180,7 @@ new #[Layout('components.layouts.app', params: ['title' => 'Watch List'])] class
     /** Re-enable automated checking for a book (drops the manual pin). */
     public function clearOverride(int $id): void
     {
-        $book = Book::findOrFail($id);
+        $book = auth()->user()->books()->findOrFail($id);
         $book->override = false;
         $book->save();
 

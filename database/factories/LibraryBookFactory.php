@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\LibraryBook;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,6 +17,7 @@ class LibraryBookFactory extends Factory
     public function definition(): array
     {
         return [
+            'user_id' => User::factory(),
             'isbn' => (string) fake()->unique()->numerify('978##########'),
             'title' => fake()->sentence(3),
             'author' => fake()->name(),

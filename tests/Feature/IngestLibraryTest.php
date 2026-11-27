@@ -1,11 +1,16 @@
 <?php
 
 use App\Models\LibraryBook;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    $this->owner = User::factory()->create();
+});
 
 const OPEN_LIBRARY = 'https://openlibrary.org/api/books*';
 const GOOGLE_BOOKS = 'https://www.googleapis.com/books/v1/volumes*';
@@ -155,3 +160,35 @@ test('--dry-run resolves without writing', function () {
 
     expect(LibraryBook::count())->toBe(0);
 });
+
+test('--user picks whose library is filled', function () {
+    Http::fake([
+        OPEN_LIBRARY => Http::response(openLibraryRecord('9780306406157')),
+        GOOGLE_BOOKS => Http::response(['totalItems' => 0, 'items' => []]),
+    ]);
+    $other = User::factory()->create();
+    LibraryBook::factory()->for($this->owner)->create(['isbn' => '9780306406157', 'title' => 'Untouched']);
+
+    $this->artisan('library:ingest', [
+        'file' => catalogFile(['9780306406157']),
+        '--throttle' => 0,
+        '--user' => $other->email,
+    ])->assertSuccessful();
+
+    expect($other->libraryBooks()->count())->toBe(1)
+        ->and($this->owner->libraryBooks()->sole()->title)->toBe('Untouched');
+});
+
+test('fails without writing when the owner is ambiguous or unknown', function (array $options) {
+    Http::fake();
+    User::factory()->create();
+
+    $this->artisan('library:ingest', ['file' => catalogFile(['9780306406157']), ...$options])
+        ->assertFailed();
+
+    expect(LibraryBook::count())->toBe(0);
+    Http::assertNothingSent();
+})->with([
+    'several users, no --user' => [[]],
+    'unknown email' => [['--user' => 'nobody@example.com']],
+]);
